@@ -554,10 +554,26 @@ const datosVistas = {
         descripcion: "Gestión operativa integral y seguimiento en tiempo real para fuerzas de seguridad.",
         detalle1: "Plataforma integral diseñada para modernizar la seguridad pública mediante la interconexión en tiempo real entre ciudadanos, policías y centros de mando. El sistema permite gestionar alertas de emergencia, coordinar patrullajes inteligentes y recopilar inteligencia de datos para prevenir el delito. Al digitalizar cada interacción, desde una solicitud de auxilio médico hasta un reporte de corrupción, el SCP transforma la seguridad en un servicio ágil, transparente y basado en resultados medibles que fortalecen la paz social.",
         ventajas: [
-            { icono: "img/IMAGENES/Sistema de Control Policial/Iconos VE 1.png", titulo: "Recuperación de la confianza ciudadana y combate a la corrupción", texto: "Al contar con un botón de denuncia directa y registro digital de cada actuación policial, se eliminan las malas prácticas y se garantiza a los ciudadanos que su voz es escuchada y atendida con transparencia." },
-            { icono: "img/IMAGENES/Sistema de Control Policial/Iconos VE 2.png", titulo: "Reducción en tiempos de respuesta ante emergencias", texto: "La conexión directa entre la aplicación ciudadana y el oficial más cercano permite que la ayuda llegue en minutos, salvando vidas y aumentando la percepción de seguridad en las calles." },
-            { icono: "img/IMAGENES/Sistema de Control Policial/Iconos VE 3.png", titulo: "Protección y respaldo total a los elementos policiales", texto: "El sistema cuida a quienes nos cuidan; mediante el botón de apoyo y el rastreo GPS, los oficiales nunca están solos, facilitando refuerzos inmediatos y generando evidencias digitales." },
-            { icono: "img/IMAGENES/Sistema de Control Policial/Iconos VE 4.png", titulo: "Prevención del delito basada en datos exactos", texto: "El análisis inteligente de información permite a los gobernantes identificar zonas de riesgo y patrones delictivos reales, permitiendo diseñar políticas públicas de seguridad más efectivas." }
+    {
+        icono: "fa-mobile-screen-button",
+        titulo: "Recuperación de la confianza ciudadana y combate a la corrupción",
+        texto: "Al contar con un botón de denuncia directa y registro digital de cada actuación policial..."
+    },
+    {
+        icono: "fa-stopwatch",
+        titulo: "Reducción en tiempos de respuesta ante emergencias",
+        texto: "La conexión directa entre la aplicación ciudadana y el oficial más cercano permite que la ayuda llegue en minutos..."
+    },
+    {
+        icono: "fa-shield-halved",
+        titulo: "Protección y respaldo total a los elementos policiales",
+        texto: "El sistema cuida a quienes nos cuidan; mediante el botón de apoyo y el rastreo GPS..."
+    },
+    {
+        icono: "fa-diagram-project",
+        titulo: "Prevención del delito basada en datos exactos",
+        texto: "El análisis inteligente de información permite identificar zonas de riesgo y patrones delictivos reales..."
+    }
         ],
         franjaImagen: "img/IMAGENES/Sistema de Control Policial/SCP logo H.png",
         fraseFinal: "Con el SCP, las administraciones gubernamentales no solo vigilan, sino que gestionan la seguridad con inteligencia, devolviendo la tranquilidad a las familias y construyendo una ciudad más resiliente y conectada."
