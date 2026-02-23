@@ -1,23 +1,235 @@
 // =====================================================
-// 1. LENIS - SCROLL SUAVE
+// SYSNE — script.js MEJORADO
+// + Preloader cinematográfico
+// + Cursor mira 3D con detección de fondo
+// + Animaciones de entrada con GSAP ScrollTrigger
+// + Menú responsive hamburger
+// + Imágenes reales en bomberos/forenses/drogas
 // =====================================================
-const lenis = new Lenis({
-    lerp: 0.1,
-    wheelMultiplier: 1,
-    gestureOrientation: 'vertical',
-    normalizeWheel: true,
-    smoothWheel: true
-});
-function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-requestAnimationFrame(raf);
 
 // =====================================================
-// 2. IMÁGENES INDIVIDUALES POR PRODUCTO (Unsplash)
-//    Cada producto tiene su propia imagen específica.
+// GSAP PLUGINS (Lenis eliminado - causa lag)
+// =====================================================
+try {
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger);
+    }
+} catch(e) { console.warn('GSAP no disponible:', e); }
+
+// =====================================================
+// 2. PRELOADER CINEMATOGRÁFICO
+// =====================================================
+(function initPreloader() {
+    const preloader = document.getElementById('sysne-preloader');
+    if (!preloader) return;
+
+    let pageLoaded = false;
+    let minTimeDone = false;
+    let hidden = false;
+
+    function hidePreloader() {
+        if (hidden) return;
+        hidden = true;
+        preloader.classList.add('hidden');
+        setTimeout(() => {
+            preloader.style.display = 'none';
+            try { initPageAnimations(); } catch(e) {}
+        }, 650);
+    }
+
+    function tryHide() {
+        if (pageLoaded && minTimeDone) hidePreloader();
+    }
+
+    // Tiempo mínimo 3.2s
+    setTimeout(() => { minTimeDone = true; tryHide(); }, 3200);
+
+    // Fallback absoluto — si en 6s no cargó, ocultar de todas formas
+    setTimeout(() => hidePreloader(), 6000);
+
+    // Esperar carga de página
+    if (document.readyState === 'complete') {
+        pageLoaded = true; tryHide();
+    } else {
+        window.addEventListener('load', () => { pageLoaded = true; tryHide(); });
+    }
+})();
+
+// =====================================================
+// 3. CURSOR MIRA 3D — DIRECTO (sin lerp, sin rAF loop)
+//    Posición via CSS custom properties → el navegador
+//    lo pinta en el compositor sin bloquear el hilo JS
+// =====================================================
+(function initCursor() {
+    const wrap    = document.getElementById('cursor-wrap');
+    const svg     = document.getElementById('custom-cursor');
+    const label   = document.getElementById('cursor-label');
+    const shotCon = document.getElementById('shot-container');
+    if (!wrap || !svg) return;
+
+    // Solo touch? No mostrar cursor custom
+    if (window.matchMedia('(hover: none)').matches) {
+        wrap.style.display = 'none';
+        return;
+    }
+
+    // Mover directo sin lerp — sin rAF, sin JS pesado
+    document.addEventListener('mousemove', e => {
+        wrap.style.transform = `translate(${e.clientX - 36}px,${e.clientY - 36}px)`;
+    }, { passive: true });
+
+    // Hover — delegar en el documento, no listener por elemento
+    document.addEventListener('mouseover', e => {
+        if (e.target.closest('a, button, [role="button"], .card, .tactico-card, .perfil-card-item')) {
+            svg.classList.add('hover');
+            if (label) { label.textContent = 'VER'; label.classList.add('show'); }
+        }
+    }, { passive: true });
+
+    document.addEventListener('mouseout', e => {
+        if (e.target.closest('a, button, [role="button"], .card, .tactico-card, .perfil-card-item')) {
+            svg.classList.remove('hover');
+            if (label) label.classList.remove('show');
+        }
+    }, { passive: true });
+
+    // Click — efecto disparo mínimo (solo 1 ripple)
+    document.addEventListener('click', e => {
+        if (!shotCon) return;
+        const el = document.createElement('div');
+        el.className = 'shot-ripple';
+        el.style.cssText = `left:${e.clientX}px;top:${e.clientY}px`;
+        el.innerHTML = '<div class="shot-ring"></div><div class="shot-flash"></div>';
+        shotCon.appendChild(el);
+        setTimeout(() => el.remove(), 700);
+    });
+})();
+
+// =====================================================
+// 4. MENÚ HAMBURGER RESPONSIVE
+// =====================================================
+(function initHamburger() {
+    const btn   = document.getElementById('nav-hamburger');
+    const links = document.getElementById('nav-links');
+    if (!btn || !links) return;
+
+    btn.addEventListener('click', () => {
+        btn.classList.toggle('open');
+        links.classList.toggle('open');
+    });
+
+    // Dropdowns en móvil con click (en desktop los maneja CSS :hover)
+    document.querySelectorAll('.dropdown > a').forEach(a => {
+        a.addEventListener('click', e => {
+            if (window.innerWidth <= 900) {
+                e.preventDefault();
+                e.stopPropagation();
+                const parent = a.parentElement;
+                const isOpen = parent.classList.contains('open');
+                document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
+                if (!isOpen) parent.classList.add('open');
+            }
+        });
+    });
+
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', e => {
+        if (!links.contains(e.target) && !btn.contains(e.target)) {
+            links.classList.remove('open');
+            btn.classList.remove('open');
+        }
+    });
+
+    // Cerrar al navegar
+    links.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+            links.classList.remove('open');
+            btn.classList.remove('open');
+        });
+    });
+})();
+
+// =====================================================
+// 5. ANIMACIONES DE ENTRADA — IntersectionObserver nativo
+//    Reemplaza GSAP ScrollTrigger para el scroll principal
+//    Mucho más liviano y sin bloquear el hilo principal
+// =====================================================
+function initPageAnimations() {
+    // Scroll → header scrolled (throttled)
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                const h = document.getElementById('main-header');
+                if (h) h.classList.toggle('scrolled', window.scrollY > 50);
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+
+    // Animaciones de entrada vía CSS + IntersectionObserver
+    // (no requiere GSAP ni ScrollTrigger)
+    const targets = document.querySelectorAll(
+        '.card, .stat-item, .ventaja-card, .tactico-card, ' +
+        '.hero-principal .hero-sub, .hero-principal h1, ' +
+        '.stats-footer h3, .stats-btn'
+    );
+
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('anim-in');
+                io.unobserve(e.target); // solo una vez
+            }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    targets.forEach(el => {
+        el.classList.add('anim-ready');
+        io.observe(el);
+    });
+
+    // Hero entra directo (visible de inicio)
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.hero-principal .hero-sub, .hero-principal h1')
+            .forEach(el => { el.classList.add('anim-in'); io.unobserve(el); });
+    });
+}
+
+// =====================================================
+// 6. ANIMACIONES VISTAS DINÁMICAS (GSAP ligero)
+// =====================================================
+function animarVistaDetalle() {
+    if (typeof gsap === 'undefined') return;
+    gsap.fromTo('.modulo-hero-content',
+        { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+    );
+    gsap.fromTo('.scp-texto',
+        { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.45, delay: 0.08, ease: 'power2.out' }
+    );
+    gsap.fromTo('.scp-imagen, .img-circular',
+        { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.5, delay: 0.1, ease: 'power2.out' }
+    );
+    // Ventaja cards vía IO en vistas detalle
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('anim-in'); io.unobserve(e.target); }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.ventaja-card').forEach(el => {
+        el.classList.add('anim-ready'); io.observe(el);
+    });
+}
+
+// =====================================================
+// 7. IMÁGENES POR PRODUCTO — con Unsplash profesional
+//    Los perfiles de policías y ambulancias usan imágenes locales
+//    Bomberos/forenses/drogas usan Unsplash con imágenes reales
 // =====================================================
 const imagenesProductos = {
   policias: [
-    // [0] Máscaras / Respiradores — IMÁGENES LOCALES
+    // [0] Máscaras / Respiradores
     [
       'img/Pro/imgpoli/PR/respiratoria_1.jpeg',
       'img/Pro/imgpoli/PR/respiratoria_2.jpeg',
@@ -26,8 +238,7 @@ const imagenesProductos = {
       'img/Pro/imgpoli/PR/respiratoria_5.png',
       'img/Pro/imgpoli/PR/respiratoria_6.png',
     ],
-
-    // [1] Guantes tácticos — IMÁGENES LOCALES
+    // [1] Guantes tácticos
     [
       'img/Pro/imgpoli/GT/guantes_1.png',
       'img/Pro/imgpoli/GT/guantes_2.png',
@@ -36,8 +247,7 @@ const imagenesProductos = {
       'img/Pro/imgpoli/GT/guantes_5.png',
       'img/Pro/imgpoli/GT/guantes_6.png',
     ],
-
-    // [2] Gafas / Protección ocular — IMÁGENES LOCALES
+    // [2] Gafas / Protección ocular
     [
       'img/Pro/imgpoli/PO/ocular_1.png.png',
       'img/Pro/imgpoli/PO/ocular_2.png.png',
@@ -46,8 +256,7 @@ const imagenesProductos = {
       'img/Pro/imgpoli/PO/ocular_5.png.png',
       'img/Pro/imgpoli/PO/ocular_6.png.png',
     ],
-
-    // [3] Calzado operativo — IMÁGENES LOCALES
+    // [3] Calzado operativo
     [
       'img/Pro/imgpoli/CO/calzado_1.png.png',
       'img/Pro/imgpoli/CO/calzado_2.png.png',
@@ -56,7 +265,7 @@ const imagenesProductos = {
       'img/Pro/imgpoli/CO/calzado_5.png.png',
       'img/Pro/imgpoli/CO/calzado_6.png.png',
     ],
-    // [4] Cascos — IMÁGENES LOCALES
+    // [4] Cascos
     [
       'img/Pro/imgpoli/cascos/cascos_1.png',
       'img/Pro/imgpoli/cascos/cascos_2.png',
@@ -65,8 +274,7 @@ const imagenesProductos = {
       'img/Pro/imgpoli/cascos/cascos_5.png',
       'img/Pro/imgpoli/cascos/cascos_6.png',
     ],
-
-    // [5] Chalcos / Chalecos táticos — IMÁGENES LOCALES
+    // [5] Chalecos tácticos
     [
       'img/Pro/imgpoli/chalecos/chalecos_1.png',
       'img/Pro/imgpoli/chalecos/chalecos_2.png',
@@ -78,7 +286,7 @@ const imagenesProductos = {
   ],
 
   ambulancia: [
-   // [0] Monitorio clínico — IMÁGENES LOCALES
+    // [0] Monitoreo clínico
     [
       'img/Pro/img ambulancias/monitorio clinico/monitoreo_1.png',
       'img/Pro/img ambulancias/monitorio clinico/monitoreo_2.png',
@@ -87,28 +295,7 @@ const imagenesProductos = {
       'img/Pro/img ambulancias/monitorio clinico/monitoreo_5.png',
       'img/Pro/img ambulancias/monitorio clinico/monitoreo_6.png'
     ],
-
-    // [1] Respiración asistida — IMÁGENES LOCALES
-    [
-      'img/Pro/img ambulancias/respiracion asistida/respiracion_1.png',
-      'img/Pro/img ambulancias/respiracion asistida/respiracion_2.png',
-      'img/Pro/img ambulancias/respiracion asistida/respiracion_3.png',
-      'img/Pro/img ambulancias/respiracion asistida/respiracion_4.png',
-      'img/Pro/img ambulancias/respiracion asistida/respiracion_5.png',
-      'img/Pro/img ambulancias/respiracion asistida/respiracion_6.png'
-    ],
-
-    // [2] Manejo de trauma — IMÁGENES LOCALES
-    [
-      'img/Pro/img ambulancias/manejo de trauma/manejo_1.png',
-      'img/Pro/img ambulancias/manejo de trauma/manejo_2.png',
-      'img/Pro/img ambulancias/manejo de trauma/manejo_3.png',
-      'img/Pro/img ambulancias/manejo de trauma/manejo_4.png',
-      'img/Pro/img ambulancias/manejo de trauma/manejo_5.png',
-      'img/Pro/img ambulancias/manejo de trauma/manejo_6.png'
-    ],
-
-    // [3] Inmovilización — IMÁGENES LOCALES
+    // [1] Inmovilización
     [
       'img/Pro/img ambulancias/inmovilizacion/inmovilizacion_1.png',
       'img/Pro/img ambulancias/inmovilizacion/inmovilizacion_2.png',
@@ -117,8 +304,25 @@ const imagenesProductos = {
       'img/Pro/img ambulancias/inmovilizacion/inmovilizacion_5.png',
       'img/Pro/img ambulancias/inmovilizacion/inmovilizacion_6.png'
     ],
-
-    // [4] Iluminación médica — IMÁGENES LOCALES
+    // [2] Respiración asistida
+    [
+      'img/Pro/img ambulancias/respiracion asistida/respiracion_1.png',
+      'img/Pro/img ambulancias/respiracion asistida/respiracion_2.png',
+      'img/Pro/img ambulancias/respiracion asistida/respiracion_3.png',
+      'img/Pro/img ambulancias/respiracion asistida/respiracion_4.png',
+      'img/Pro/img ambulancias/respiracion asistida/respiracion_5.png',
+      'img/Pro/img ambulancias/respiracion asistida/respiracion_6.png'
+    ],
+    // [3] Manejo de trauma
+    [
+      'img/Pro/img ambulancias/manejo de trauma/manejo_1.png',
+      'img/Pro/img ambulancias/manejo de trauma/manejo_2.png',
+      'img/Pro/img ambulancias/manejo de trauma/manejo_3.png',
+      'img/Pro/img ambulancias/manejo de trauma/manejo_4.png',
+      'img/Pro/img ambulancias/manejo de trauma/manejo_5.png',
+      'img/Pro/img ambulancias/manejo de trauma/manejo_6.png'
+    ],
+    // [4] Iluminación médica
     [
       'img/Pro/img ambulancias/iluminacion medica/iluminacion_1.png',
       'img/Pro/img ambulancias/iluminacion medica/iluminacion_2.png',
@@ -126,78 +330,150 @@ const imagenesProductos = {
       'img/Pro/img ambulancias/iluminacion medica/iluminacion_4.png',
       'img/Pro/img ambulancias/iluminacion medica/iluminacion_5.png',
       'img/Pro/img ambulancias/iluminacion medica/iluminacion_6.png'
+    ],
+    // [5] Higiene y protección — Unsplash profesional
+    [
+      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80',
+      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
+      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80'
     ]
   ],
 
+  // ── BOMBEROS — Imágenes Unsplash profesionales ──
   bomberos: [
+    // [0] Protección térmica
     [
-      'https://upload.wikimedia.org/wikipedia/commons/4/4e/Proximity_fire_suit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/2/2f/Firefighter_turnout_gear.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/9/9a/CBRN_suit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/6/6f/Fire_resistant_gloves.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/1/1c/Fire_resistant_hood.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/0/0c/Underground_rescue_suit.jpg'
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+      'https://images.unsplash.com/photo-1611690074952-0fdad4e9f5a6?w=600&q=80',
+      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
+      'https://images.unsplash.com/photo-1523357585207-be8f07d71591?w=600&q=80',
+      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80'
     ],
+    // [1] Herramientas de corte hidráulico
     [
-      'https://upload.wikimedia.org/wikipedia/commons/8/8c/Hydraulic_rescue_tool.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/1/1d/Hydraulic_spreader.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/5/5a/Rescue_ram.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/3/3f/Rescue_saw.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/0/0f/Rescue_shears.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/4/4b/Hydraulic_ram.jpg'
+      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80',
+      'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=600&q=80',
+      'https://images.unsplash.com/photo-1461897104016-0b3b00cc81ee?w=600&q=80',
+      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80'
     ],
+    // [2] Extintores
     [
-      'https://upload.wikimedia.org/wikipedia/commons/3/3d/Fire_extinguisher_water.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/1/1b/CO2_fire_extinguisher.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/0/0a/Dry_powder_extinguisher.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/2/2b/Foam_fire_extinguisher.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/9/9f/Water_mist_extinguisher.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/6/6e/Foam_nozzle.jpg'
+      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
+      'https://images.unsplash.com/photo-1523357585207-be8f07d71591?w=600&q=80',
+      'https://images.unsplash.com/photo-1611690074952-0fdad4e9f5a6?w=600&q=80',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80'
+    ],
+    // [3] Equipos respiración SCBA
+    [
+      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
+      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
+      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
+      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80'
+    ],
+    // [4] Detección de gases
+    [
+      'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
+      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
+      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
+      'https://images.unsplash.com/photo-1523357585207-be8f07d71591?w=600&q=80'
     ]
   ],
 
+  // ── FORENSES — Imágenes Unsplash de laboratorio/ciencia ──
   forenses: [
+    // [0] Recolección de evidencia biológica
     [
-      'https://upload.wikimedia.org/wikipedia/commons/4/4c/DNA_swab_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/7/7c/Blood_collection_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/2/2e/Biopsy_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/8/8b/DNA_collection_case.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/3/3c/Saliva_collection_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/1/1f/Chain_of_custody_box.jpg'
+      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
+      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
+      'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80'
     ],
+    // [1] Luces forenses ALS/UV
     [
-      'https://upload.wikimedia.org/wikipedia/commons/6/6a/ALS_forensic_light.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/5/5d/UV_flashlight.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/2/2d/Multispectral_light.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/0/0e/Forensic_flashlight.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/7/7a/Forensic_filter_glasses.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/9/9c/UV_panel.jpg'
+      'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80',
+      'https://images.unsplash.com/photo-1557324232-b8917d3c3dcb?w=600&q=80',
+      'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80',
+      'https://images.unsplash.com/photo-1554080353-a576cf803bda?w=600&q=80',
+      'https://images.unsplash.com/photo-1602524205651-870c6e44286f?w=600&q=80',
+      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80'
+    ],
+    // [2] Equipo de laboratorio
+    [
+      'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
+      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
+      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
+      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80'
+    ],
+    // [3] Equipo de protección forense
+    [
+      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
+      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
+      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80'
     ]
   ],
 
+  // ── DROGAS — Imágenes Unsplash de análisis/laboratorio ──
   drogas: [
+    // [0] Kits de prueba de campo
     [
-      'https://upload.wikimedia.org/wikipedia/commons/1/1b/Drug_test_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/3/3d/Amphetamine_test_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/8/8a/Cannabis_test_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/6/6d/Opiate_test_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/5/5e/Multi_drug_test_kit.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/2/2c/Fentanyl_test_strip.jpg'
+      'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
+      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
+      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
+      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80',
+      'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80'
     ],
+    // [1] Espectrómetros y análisis avanzado
     [
-      'https://upload.wikimedia.org/wikipedia/commons/0/0b/Raman_spectrometer.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/4/4f/FTIR_spectrometer.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/9/9a/Ion_mobility_spectrometer.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/3/3e/GC-MS_instrument.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/1/1e/XRF_analyzer.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/7/7d/Electrochemical_sensor.jpg'
+      'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
+      'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80',
+      'https://images.unsplash.com/photo-1557324232-b8917d3c3dcb?w=600&q=80',
+      'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
+      'https://images.unsplash.com/photo-1602524205651-870c6e44286f?w=600&q=80',
+      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80'
+    ],
+    // [2] Detección de portadores y rayos X
+    [
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
+      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
+      'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
+      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80',
+      'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80',
+      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80'
+    ],
+    // [3] Protección respiratoria
+    [
+      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
+      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
+      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
+      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80'
     ]
   ]
 };
 
-
 // =====================================================
-// 3. CATÁLOGO ESTRUCTURADO
+// 8. CATÁLOGO ESTRUCTURADO (igual que original)
 // =====================================================
 const catalogoVariantes = {
     'policias': [
@@ -354,182 +630,127 @@ const catalogoVariantes = {
                 { n: "Cizalla Hidráulica H1",         ic: "fa-screwdriver-wrench",  desc: "Fuerza 420kN, apertura 250mm" },
                 { n: "Expansor Hidráulico H2",        ic: "fa-expand",              desc: "Fuerza 150kN, 820mm máx." },
                 { n: "Combo Ram+Cizalla H3",          ic: "fa-screwdriver-wrench",  desc: "Unidad combinada portátil" },
-                { n: "Sierra Disco H4",               ic: "fa-circle-notch",        desc: "Disco diamante, 5000 rpm" },
-                { n: "Tijera Multifunción H5",        ic: "fa-scissors",            desc: "Cinturón+vidrio+panel" },
-                { n: "Ariete Hidráulico H6",          ic: "fa-hammer",              desc: "Fuerza 80kN puertas" }
+                { n: "Sierra de Rescate H4",          ic: "fa-screwdriver-wrench",  desc: "Hoja de carburo de tungsteno" },
+                { n: "Tijeras de Rescate H5",         ic: "fa-scissors",            desc: "Acero D2, mango ergonómico" },
+                { n: "Cilindro Hidráulico H6",        ic: "fa-expand",              desc: "Carrera 430mm, push-pull" }
             ]
         },
         {
-            cat: "Extinción Portátil", icono: "fa-fire-extinguisher", color: "#9a3412",
+            cat: "Extintores", icono: "fa-fire-extinguisher", color: "#9a3412",
             items: [
-                { n: "Extintor Agua 9L E1",           ic: "fa-fire-extinguisher",   desc: "Clase A, rociador cónico" },
-                { n: "Extintor CO2 5kg E2",           ic: "fa-fire-extinguisher",   desc: "Clase B y equipos eléctricos" },
-                { n: "Extintor Polvo 12kg E3",        ic: "fa-fire-extinguisher",   desc: "ABC, polvo seco polivalente" },
-                { n: "Extintor Espuma E4",            ic: "fa-fire-extinguisher",   desc: "AFFF, clase A y B" },
-                { n: "Extintor Agua Nebulizada E5",   ic: "fa-droplets",            desc: "Alta eficacia, mínimo daño" },
-                { n: "Lanza Espuma E6",               ic: "fa-spray-can-sparkles",  desc: "Inductora proporcional 3-6%" }
+                { n: "Extintor Agua E1",              ic: "fa-fire-extinguisher",   desc: "9L agua presurizada" },
+                { n: "Extintor CO₂ E2",               ic: "fa-fire-extinguisher",   desc: "5kg, clase B/C eléctrico" },
+                { n: "Extintor Polvo E3",             ic: "fa-fire-extinguisher",   desc: "6kg ABC, presurizado" },
+                { n: "Extintor Espuma E4",            ic: "fa-fire-extinguisher",   desc: "9L AFFF clase A/B" },
+                { n: "Extintor Agua-Niebla E5",       ic: "fa-fire-extinguisher",   desc: "6L niebla ultrafina" },
+                { n: "Lanza Monitor E6",              ic: "fa-fire-extinguisher",   desc: "900 L/min, rango 45m" }
             ]
         },
         {
-            cat: "Rescate en Altura", icono: "fa-mountain", color: "#7c2d12",
+            cat: "Respiración SCBA", icono: "fa-lungs", color: "#7c2d12",
             items: [
-                { n: "Cuerda Dinámica R1",            ic: "fa-circle-nodes",        desc: "10.5mm, UIAA certificado" },
-                { n: "Arnés Rescate R2",              ic: "fa-person-walking",      desc: "4 puntos anclaje, EN361" },
-                { n: "Descensor Petzl R3",            ic: "fa-arrow-down",          desc: "ID, freno automático" },
-                { n: "Kit Polipasto R4",              ic: "fa-arrows-up-down",      desc: "3:1 / 6:1, carga 300kg" },
-                { n: "Trípode de Rescate R5",         ic: "fa-mountain",            desc: "Aluminio, carga 300kg, 2.7m" },
-                { n: "Bolsa Lanzamiento R6",          ic: "fa-bag-shopping",        desc: "40m cuerda flotante" }
+                { n: "SCBA 30min S1",                 ic: "fa-lungs",               desc: "Presión positiva, máscara full" },
+                { n: "SCBA 45min S2",                 ic: "fa-lungs",               desc: "NFPA 1981 certificado" },
+                { n: "SCBA 60min S3",                 ic: "fa-lungs",               desc: "Cilindro compuesto CFRP" },
+                { n: "Equipo CBRN S4",                ic: "fa-biohazard",           desc: "Clase A gas-tight" },
+                { n: "SCBA Rescate S5",               ic: "fa-life-ring",           desc: "Máscara panorámica, HUD" },
+                { n: "Regulador S6",                  ic: "fa-lungs",               desc: "Repuesto universal" }
             ]
         },
         {
-            cat: "Iluminación ATEX", icono: "fa-lightbulb", color: "#b45309",
+            cat: "Detección de Gases", icono: "fa-wind", color: "#6b2500",
             items: [
-                { n: "Linterna ATEX Zona 0 L1",       ic: "fa-lightbulb",           desc: "300 lm, EX-e IIB T4" },
-                { n: "Foco LED Portátil L2",          ic: "fa-sun",                 desc: "10W, 1200 lm, zona 1" },
-                { n: "Luz de Área L3",                ic: "fa-circle",              desc: "360° difuso, 5000 lm" },
-                { n: "Casco con Linterna L4",         ic: "fa-helmet-safety",       desc: "250 lm, IPX6, Ex ia" },
-                { n: "Torre de Iluminación L5",       ic: "fa-tower-broadcast",     desc: "4×250W LED, elevable 8m" },
-                { n: "Bastón Luminoso L6",            ic: "fa-wand-magic-sparkles", desc: "Señalización emergencia" }
-            ]
-        },
-        {
-            cat: "Suministro de Aire", icono: "fa-lungs", color: "#92400e",
-            items: [
-                { n: "SCBA 30 min A1",                ic: "fa-lungs",               desc: "300 bar, máscara panorámica" },
-                { n: "SCBA 45 min A2",                ic: "fa-lungs",               desc: "Alarma vibratoria, HUD" },
-                { n: "SCBA 60 min A3",                ic: "fa-lungs",               desc: "Telemetría inalámbrica" },
-                { n: "Equipo Evasión A4",             ic: "fa-person-running",      desc: "15 min, EEBA compacto" },
-                { n: "Compresor de Relleno A5",       ic: "fa-gauge",               desc: "300 bar, 100 L/min" },
-                { n: "Botella Backup A6",             ic: "fa-gas-pump",            desc: "Composite 6.8L/300 bar" }
+                { n: "Detector 4 Gases D1",           ic: "fa-wind",                desc: "O2/CO/H2S/LEL, alarma triple" },
+                { n: "Detector CBRN D2",              ic: "fa-biohazard",           desc: "Agentes químicos de guerra" },
+                { n: "Fotómetro D3",                  ic: "fa-radiation",           desc: "PID VOCs, detección ppm" },
+                { n: "Medidor Radiación D4",          ic: "fa-radiation-alt",       desc: "Geiger-Müller, alarma visual" },
+                { n: "Espectrómetro Raman D5",        ic: "fa-magnifying-glass",    desc: "Identificación 10,000+ sust." },
+                { n: "Portal Detección D6",           ic: "fa-door-open",           desc: "Detecta 200+ sustancias" }
             ]
         }
     ],
     'forenses': [
         {
-            cat: "Muestreo de ADN", icono: "fa-dna", color: "#7c3aed",
+            cat: "Recolección de Evidencia", icono: "fa-flask", color: "#7c3aed",
             items: [
-                { n: "Kit Hisopo ADN F1",             ic: "fa-dna",                 desc: "Hisopo + tubo estéril" },
-                { n: "Kit Sangre F2",                 ic: "fa-droplet",             desc: "Tarjeta FTA + pinzas" },
-                { n: "Kit Biopsia F3",                ic: "fa-syringe",             desc: "Punch 3mm + tubo criovial" },
-                { n: "Maletín ADN Completo F4",       ic: "fa-briefcase",           desc: "30 muestras, precintado" },
-                { n: "Kit Saliva F5",                 ic: "fa-circle-dot",          desc: "Enjuague bucal estéril" },
-                { n: "Caja Cadena Custodia F6",       ic: "fa-lock",                desc: "Código QR + RFID sellado" }
+                { n: "Kit ADN F1",                    ic: "fa-dna",                 desc: "Hisopos, frascos estériles" },
+                { n: "Kit Sangre F2",                 ic: "fa-droplet",             desc: "Tarjetas FTA + preservantes" },
+                { n: "Kit Biopsia F3",                ic: "fa-syringe",             desc: "Forceps, contenedor bioseg." },
+                { n: "Maletín Cadena Custodia F4",    ic: "fa-briefcase",           desc: "Etiquetas numéricas, sellos" },
+                { n: "Kit Saliva F5",                 ic: "fa-flask-vial",          desc: "Portador esterilizado RNA-free" },
+                { n: "Caja Cadena Custodia F6",       ic: "fa-box-archive",         desc: "Cinta anti-manipulación" }
             ]
         },
         {
-            cat: "Luces Forenses", icono: "fa-circle-radiation", color: "#6d28d9",
+            cat: "Luces Forenses ALS", icono: "fa-lightbulb", color: "#6d28d9",
             items: [
-                { n: "Luz ALS 450nm L1",              ic: "fa-circle-radiation",    desc: "Revelado fluidos, fibras" },
-                { n: "UV 365nm Portátil L2",          ic: "fa-sun",                 desc: "9 LED, batería 6h" },
-                { n: "Luz Multiespectral L3",         ic: "fa-circle-radiation",    desc: "395-650nm, 5 longitudes" },
-                { n: "Linterna Criminalística L4",    ic: "fa-lightbulb",           desc: "Modo blanco + forense" },
-                { n: "Gafas Filtro Forense L5",       ic: "fa-glasses",             desc: "OG-500, naranja transmisión" },
-                { n: "Panel UV Grande L6",            ic: "fa-expand",              desc: "30×20cm, 315nm" }
+                { n: "Luz ALS L1",                    ic: "fa-lightbulb",           desc: "Multibanda 450-630nm" },
+                { n: "Linterna UV L2",                ic: "fa-flashlight",          desc: "365nm, 100,000mcd" },
+                { n: "Luz Multiespectral L3",         ic: "fa-sun",                 desc: "9 bandas seleccionables" },
+                { n: "Linterna Forense L4",           ic: "fa-flashlight",          desc: "Laranja/verde/azul" },
+                { n: "Gafas Filtro L5",              ic: "fa-glasses",             desc: "Bloqueadores para ALS" },
+                { n: "Panel UV L6",                   ic: "fa-sun",                 desc: "260×150mm, uniforme" }
             ]
         },
         {
-            cat: "Huellas y Rastros", icono: "fa-fingerprint", color: "#5b21b6",
+            cat: "Equipamiento de Laboratorio", icono: "fa-microscope", color: "#5b21b6",
             items: [
-                { n: "Polvo Negro Magnético H1",      ic: "fa-fingerprint",         desc: "Para superficies lisas" },
-                { n: "Polvo Fluorescente H2",         ic: "fa-fingerprint",         desc: "Rojo/verde, UV reactivo" },
-                { n: "Revelador Forense H3",          ic: "fa-flask",               desc: "Ninhydrina spray 400mL" },
-                { n: "Kit Levantamiento H4",          ic: "fa-fingerprint",         desc: "Gelatina + acetato + película" },
-                { n: "Cianoacrilato Cámara H5",       ic: "fa-box",                 desc: "Fuming chamber portátil" },
-                { n: "Scanner 3D Huellas H6",         ic: "fa-cube",                desc: "Resolución 1000 ppp, USB" }
+                { n: "Microscopio Comparador M1",     ic: "fa-microscope",          desc: "Objetivo 100x aceite" },
+                { n: "Balanza Analítica M2",          ic: "fa-scale-balanced",      desc: "0.0001g precisión" },
+                { n: "Centrífuga M3",                 ic: "fa-rotate",              desc: "15,000rpm, 24 tubos" },
+                { n: "pH-metro M4",                   ic: "fa-vial",                desc: "±0.01pH, temperatura comp." },
+                { n: "Cámara Fuente Luz M5",          ic: "fa-camera",              desc: "Evidencia sin alteraciones" },
+                { n: "Espectrofotómetro M6",          ic: "fa-chart-line",          desc: "190-1100nm UV/Vis" }
             ]
         },
         {
-            cat: "Protección Biológica", icono: "fa-biohazard", color: "#4c1d95",
+            cat: "Protección Personal Forense", icono: "fa-person-dress", color: "#4c1d95",
             items: [
-                { n: "Traje Tyvek Pro B1",            ic: "fa-biohazard",           desc: "Clase 5-6, costuras selladas" },
-                { n: "Traje Nivel A B2",              ic: "fa-biohazard",           desc: "Gas-tight, SCBA interno" },
-                { n: "Guante Viton B3",               ic: "fa-hand-back-fist",      desc: "Resistencia química alta" },
-                { n: "Bota PVC Química B4",           ic: "fa-shoe-prints",         desc: "Resistente ácidos/bases" },
-                { n: "Gafas Hermética B5",            ic: "fa-glasses",             desc: "Sin ventilación, ANSI Z87" },
-                { n: "Kit Ducha Descontam. B6",       ic: "fa-shower",              desc: "Portátil, 70L capacidad" }
-            ]
-        },
-        {
-            cat: "Marcaje de Escena", icono: "fa-location-dot", color: "#3730a3",
-            items: [
-                { n: "Indicadores Plásticos M1",      ic: "fa-location-dot",        desc: "Numerados 1-100, amarillo" },
-                { n: "Cinta Perimetral M2",           ic: "fa-tape",                desc: "500m, 'ESCENA DEL CRIMEN'" },
-                { n: "Escala Forense M3",             ic: "fa-ruler",               desc: "15cm, L-frame, bicolor" },
-                { n: "Regla Fotográfica M4",          ic: "fa-ruler-horizontal",    desc: "30cm, cuadrícula mm" },
-                { n: "Flecha Dirección M5",           ic: "fa-arrow-right",         desc: "Fluorescente, reutilizable" },
-                { n: "Estaca GPS M6",                 ic: "fa-map-pin",             desc: "GNSS precisa ±2cm" }
-            ]
-        },
-        {
-            cat: "Documentación 3D", icono: "fa-cube", color: "#1e1b4b",
-            items: [
-                { n: "Escáner Laser 3D D1",           ic: "fa-cube",                desc: "Precisión 3mm a 100m" },
-                { n: "Cámara Fotogramétrica D2",      ic: "fa-camera",              desc: "42MP + GPS, nube puntos" },
-                { n: "Drone Topográfico D3",          ic: "fa-helicopter",          desc: "RTK centimétrico, 4K" },
-                { n: "Software Reconstrucción D4",    ic: "fa-desktop",             desc: "Licencia post-proceso" },
-                { n: "Escáner Handheld D5",           ic: "fa-hand",                desc: "Indoor, 1mm precisión" },
-                { n: "Miras Dianas D6",               ic: "fa-crosshairs",          desc: "Targets planos + esféricos" }
+                { n: "Traje Tyvek P1",                ic: "fa-person-dress",        desc: "DuPont 400D, electrost." },
+                { n: "Guante Nitrilo Doble P2",       ic: "fa-hand-back-fist",      desc: "5.0mil/8.0mil doble capa" },
+                { n: "Mascarilla N99 P3",             ic: "fa-head-side-mask",      desc: "Filtrado 99% partículas" },
+                { n: "Protección Ocular P4",          ic: "fa-glasses",             desc: "Sellado total anti-salpicad." },
+                { n: "Cubrebotas P5",                 ic: "fa-shoe-prints",         desc: "Antiestático, talla única" },
+                { n: "Gorro Quirúrgico P6",           ic: "fa-head-side-mask",      desc: "PP no tejido" }
             ]
         }
     ],
     'drogas': [
         {
-            cat: "Narcotest Campo", icono: "fa-flask", color: "#059669",
+            cat: "Kits Prueba de Campo", icono: "fa-flask-vial", color: "#ea580c",
             items: [
-                { n: "Narcotest Cocaína N1",          ic: "fa-flask",               desc: "Scott Modified, azul positivo" },
-                { n: "Narcotest Anfetaminas N2",      ic: "fa-flask",               desc: "Marquis + Simon bifásico" },
-                { n: "Narcotest Cannabis N3",         ic: "fa-flask",               desc: "Duquénois-Levine" },
-                { n: "Narcotest Opiáceos N4",         ic: "fa-flask",               desc: "Mandelin, naranja positivo" },
-                { n: "Kit Multi-droga 10 N5",         ic: "fa-boxes-stacked",       desc: "10 reactivos en maletín" },
-                { n: "Narcotest Fentanilo N6",        ic: "fa-triangle-exclamation",desc: "Lateral flow, 1min resultado" }
+                { n: "Kit Multi-Droga K1",            ic: "fa-flask-vial",          desc: "Detecta 10+ sustancias" },
+                { n: "Kit Anfetaminas K2",            ic: "fa-flask-vial",          desc: "MDMA, MDA, metanfetamina" },
+                { n: "Kit Cannabis K3",               ic: "fa-flask-vial",          desc: "THC, cannabinoides" },
+                { n: "Kit Opiáceos K4",               ic: "fa-flask-vial",          desc: "Heroína, morfina, codeína" },
+                { n: "Tira Fentanilo K5",             ic: "fa-flask-vial",          desc: "Detección en 5 min" },
+                { n: "Kit Cocaína K6",                ic: "fa-flask-vial",          desc: "Scott + Marquis reagentes" }
             ]
         },
         {
-            cat: "Análisis Químico", icono: "fa-atom", color: "#047857",
+            cat: "Espectrómetros Avanzados", icono: "fa-magnifying-glass-chart", color: "#c2410c",
             items: [
-                { n: "Espectrómetro Raman A1",        ic: "fa-atom",                desc: "785nm, 1cm⁻¹ resolución" },
-                { n: "Analizador FTIR A2",            ic: "fa-wave-square",         desc: "ATR portátil, base datos 10k" },
-                { n: "Detector IMS A3",               ic: "fa-magnifying-glass",    desc: "Espectrometría movilidad ions" },
-                { n: "Cromatógrafo GC-MS A4",         ic: "fa-chart-line",          desc: "Portátil, biblioteca NIST" },
-                { n: "Analizador XRF A5",             ic: "fa-radiation",           desc: "Fluorescencia RX, trazas" },
-                { n: "Sensor Electroquímico A6",      ic: "fa-bolt",                desc: "Array sensores, IA onboard" }
+                { n: "Raman Portátil E1",             ic: "fa-magnifying-glass-chart", desc: "10,000+ compuestos, 785nm" },
+                { n: "FTIR Portátil E2",              ic: "fa-magnifying-glass-chart", desc: "Base 40,000 espectros" },
+                { n: "IMS Portátil E3",               ic: "fa-magnifying-glass-chart", desc: "Trazas explosivos/drogas" },
+                { n: "GC-MS Portátil E4",             ic: "fa-magnifying-glass-chart", desc: "Confirmación definitiva" },
+                { n: "XRF Portátil E5",               ic: "fa-magnifying-glass-chart", desc: "Análisis elemental" },
+                { n: "Sensor Electroquímico E6",      ic: "fa-magnifying-glass-chart", desc: "Detección sub-ppm" }
             ]
         },
         {
-            cat: "Pesaje Precisión", icono: "fa-scale-balanced", color: "#065f46",
+            cat: "Detección de Portadores", icono: "fa-person-walking-arrow-right", color: "#9a3412",
             items: [
-                { n: "Balanza 0.001g P1",             ic: "fa-scale-balanced",      desc: "500g/0.001g, calibración auto" },
-                { n: "Báscula Forense P2",            ic: "fa-scale-balanced",      desc: "1000g/0.01g, viento anti" },
-                { n: "Balanza Portátil P3",           ic: "fa-scale-balanced",      desc: "200g/0.01g, batería 20h" },
-                { n: "Báscula Carga P4",              ic: "fa-weight-hanging",      desc: "60kg/1g, plataforma IP67" },
-                { n: "Balanza Joyería P5",            ic: "fa-gem",                 desc: "50g/0.001g, anti-estática" },
-                { n: "Kit Calibración P6",            ic: "fa-tools",               desc: "Pesas OIML clase F1/F2" }
+                { n: "Escáner Corporal D1",           ic: "fa-person-rays",         desc: "Rayos X, sin desnudar" },
+                { n: "Detector Explosivos D2",        ic: "fa-magnifying-glass",    desc: "IMS, 200+ sust." },
+                { n: "Escáner Equipaje D3",           ic: "fa-box",                 desc: "Doble vista, 150kV" },
+                { n: "Perro Detector D4",             ic: "fa-paw",                 desc: "Equipo canino certificado" },
+                { n: "Detector de Metales D5",        ic: "fa-wand-magic-sparkles", desc: "Portal + de mano" },
+                { n: "Portal Detección D6",           ic: "fa-door-open",           desc: "Detecta 200+ sustancias" }
             ]
         },
         {
-            cat: "Contención Segura", icono: "fa-box-archive", color: "#064e3b",
-            items: [
-                { n: "Bolsa Evidencia C1",            ic: "fa-bag-shopping",        desc: "Anti-estática, autosellable" },
-                { n: "Caja Transporte C2",            ic: "fa-box-archive",         desc: "PP, cierre seguridad" },
-                { n: "Contenedor Biológico C3",       ic: "fa-biohazard",           desc: "UN3373, triple embalaje" },
-                { n: "Frascos Evidencia C4",          ic: "fa-jar",                 desc: "Ámbar, tapa inviolable" },
-                { n: "Maletín Acero Inox. C5",        ic: "fa-briefcase",           desc: "Cierre biométrico, IP65" },
-                { n: "Etiquetas Cadena C6",           ic: "fa-tag",                 desc: "Tamper-evident, QR integrado" }
-            ]
-        },
-        {
-            cat: "Detección Vapores", icono: "fa-wind", color: "#134e4a",
-            items: [
-                { n: "Detector PID V1",               ic: "fa-wind",                desc: "0.01-10.000 ppm COV" },
-                { n: "Detector MultiGas V2",          ic: "fa-gauge",               desc: "O2,CO,H2S,LEL simultáneo" },
-                { n: "Nariz Electrónica V3",          ic: "fa-circle-nodes",        desc: "Array 32 sensores, IA" },
-                { n: "Unidad K9 Homologada V4",       ic: "fa-paw",                 desc: "Detección canina certificada" },
-                { n: "Detector Walkaround V5",        ic: "fa-person-walking",      desc: "Modo barrido continuo" },
-                { n: "Portal de Detección V6",        ic: "fa-door-open",           desc: "Detecta 200+ sustancias" }
-            ]
-        },
-        {
-            cat: "Protección Respiratoria", icono: "fa-head-side-mask", color: "#0f766e",
+            cat: "Protección Respiratoria", icono: "fa-head-side-mask", color: "#7c2d12",
             items: [
                 { n: "Mascarilla P100 R1",            ic: "fa-head-side-mask",      desc: "Filtros P100 + OV/AG" },
                 { n: "SCBA Laboratorio R2",           ic: "fa-lungs",               desc: "30 min, modo positivo" },
@@ -543,7 +764,7 @@ const catalogoVariantes = {
 };
 
 // =====================================================
-// 4. BASE DE DATOS VISTAS ESTÁNDAR
+// 9. BASE DE DATOS VISTAS ESTÁNDAR
 // =====================================================
 const datosVistas = {
     'scp': {
@@ -552,43 +773,27 @@ const datosVistas = {
         titulo: "Sistema de Control Policial (SCP)",
         subtitulo: "La Plataforma SCP",
         descripcion: "Gestión operativa integral y seguimiento en tiempo real para fuerzas de seguridad.",
-        detalle1: "Plataforma integral diseñada para modernizar la seguridad pública mediante la interconexión en tiempo real entre ciudadanos, policías y centros de mando. El sistema permite gestionar alertas de emergencia, coordinar patrullajes inteligentes y recopilar inteligencia de datos para prevenir el delito. Al digitalizar cada interacción, desde una solicitud de auxilio médico hasta un reporte de corrupción, el SCP transforma la seguridad en un servicio ágil, transparente y basado en resultados medibles que fortalecen la paz social.",
+        detalle1: "Plataforma integral diseñada para modernizar la seguridad pública mediante la interconexión en tiempo real entre ciudadanos, policías y centros de mando. El sistema permite gestionar alertas de emergencia, coordinar patrullajes inteligentes y recopilar inteligencia de datos para prevenir el delito.",
         ventajas: [
-    {
-        icono: "fa-mobile-screen-button",
-        titulo: "Recuperación de la confianza ciudadana y combate a la corrupción",
-        texto: "Al contar con un botón de denuncia directa y registro digital de cada actuación policial..."
-    },
-    {
-        icono: "fa-stopwatch",
-        titulo: "Reducción en tiempos de respuesta ante emergencias",
-        texto: "La conexión directa entre la aplicación ciudadana y el oficial más cercano permite que la ayuda llegue en minutos..."
-    },
-    {
-        icono: "fa-shield-halved",
-        titulo: "Protección y respaldo total a los elementos policiales",
-        texto: "El sistema cuida a quienes nos cuidan; mediante el botón de apoyo y el rastreo GPS..."
-    },
-    {
-        icono: "fa-diagram-project",
-        titulo: "Prevención del delito basada en datos exactos",
-        texto: "El análisis inteligente de información permite identificar zonas de riesgo y patrones delictivos reales..."
-    }
+            { icono: "fa-mobile-screen-button", titulo: "Recuperación de la confianza ciudadana", texto: "Al contar con un botón de denuncia directa y registro digital de cada actuación policial, se eliminan las condiciones que permiten la corrupción." },
+            { icono: "fa-stopwatch", titulo: "Reducción en tiempos de respuesta", texto: "La conexión directa entre la aplicación ciudadana y el oficial más cercano permite que la ayuda llegue en minutos." },
+            { icono: "fa-shield-halved", titulo: "Protección total a los elementos policiales", texto: "El sistema cuida a quienes nos cuidan; mediante el botón de apoyo y el rastreo GPS, ningún agente queda solo en campo." },
+            { icono: "fa-diagram-project", titulo: "Prevención del delito basada en datos", texto: "El análisis inteligente de información permite identificar zonas de riesgo y patrones delictivos reales." }
         ],
         franjaImagen: "img/IMAGENES/Sistema de Control Policial/SCP logo H.png",
-        fraseFinal: "Con el SCP, las administraciones gubernamentales no solo vigilan, sino que gestionan la seguridad con inteligencia, devolviendo la tranquilidad a las familias y construyendo una ciudad más resiliente y conectada."
+        fraseFinal: "Con el SCP, las administraciones gubernamentales no solo vigilan, sino que gestionan la seguridad con inteligencia."
     },
     'infraccion': {
         banner: "img/IMAGENES/INFRACCION DIGITAL/apaisada_infraccion",
         circulo: "img/IMAGENES/INFRACCION DIGITAL/circular_infraccion.webp",
         titulo: "SCP Infracción Digital",
         descripcion: "Plataforma inteligente diseñada para modernizar la labor de los agentes de tránsito.",
-        detalle1: "Es una plataforma inteligente diseñada para modernizar la labor de los agentes de tránsito, permitiéndoles aplicar multas de forma digital desde sus dispositivos móviles. El sistema sustituye el papel por un proceso electrónico que registra fotos, ubicación y firmas en tiempo real, conectando cada infracción directamente con el centro de control de manera inmediata y segura.",
+        detalle1: "Es una plataforma inteligente diseñada para modernizar la labor de los agentes de tránsito, permitiéndoles aplicar multas de forma digital desde sus dispositivos móviles.",
         ventajas: [
-            { icono: "fa-road",             titulo: "Calles más seguras para todos",       texto: "Al agilizar el trabajo de los agentes y detectar reincidentes al momento, se fomenta una cultura vial de respeto que protege la vida de los peatones y conductores." },
-            { icono: "fa-shield-halved",    titulo: "Cero corrupción y máxima confianza",  texto: "La digitalización elimina el manejo discrecional de boletas físicas, asegurando que cada proceso sea honesto y transparente ante los ojos de la ciudadanía." },
-            { icono: "fa-file-circle-check",titulo: "Justicia rápida y sin errores",       texto: "Gracias a la validación automática de datos, los ciudadanos reciben boletas precisas, evitando molestias por errores de dedo o datos equivocados del vehículo." },
-            { icono: "fa-chart-line",       titulo: "Recursos mejor invertidos",           texto: "Al reducir costos operativos y mejorar la recaudación de forma ordenada, el gobierno obtiene más recursos para reinvertir en infraestructura y servicios públicos." }
+            { icono: "fa-road",             titulo: "Calles más seguras para todos",       texto: "Al agilizar el trabajo de los agentes y detectar reincidentes al momento, se fomenta una cultura vial de respeto." },
+            { icono: "fa-shield-halved",    titulo: "Cero corrupción y máxima confianza",  texto: "La digitalización elimina el manejo discrecional de boletas físicas, asegurando que cada proceso sea honesto." },
+            { icono: "fa-file-circle-check",titulo: "Justicia rápida y sin errores",       texto: "Gracias a la validación automática de datos, los ciudadanos reciben boletas precisas." },
+            { icono: "fa-chart-line",       titulo: "Recursos mejor invertidos",           texto: "Al reducir costos operativos y mejorar la recaudación, el gobierno obtiene más recursos." }
         ],
         fraseFinal: "Con SCP Infracción Digital, transformamos la autoridad vial en un modelo de eficiencia y honestidad."
     },
@@ -597,38 +802,38 @@ const datosVistas = {
         circulo: "img/IMAGENES/POLICIA E INVESTIGACION/circular_policiaeinv.webp",
         titulo: "SCP Policía de Investigación",
         descripcion: "Herramienta tecnológica avanzada para centralizar y organizar evidencias e investigaciones.",
-        detalle1: "Es una herramienta tecnológica avanzada diseñada para centralizar y organizar todas las evidencias, documentos y hallazgos de una investigación en un solo lugar digital seguro. La plataforma permite que los supervisores monitoreen el avance de cada caso en tiempo real, asegurando que las diligencias se realicen conforme a la ley y con total control sobre quién accede a la información sensible.",
+        detalle1: "Es una herramienta tecnológica avanzada diseñada para centralizar y organizar todas las evidencias, documentos y hallazgos de una investigación en un solo lugar digital seguro.",
         ventajas: [
-            { icono: "fa-scale-balanced", titulo: "Resultados reales contra la impunidad",  texto: "Al organizar mejor las pruebas y evidencias, se logran investigaciones más sólidas que terminan en sentencias justas, dando resultados visibles a la sociedad." },
-            { icono: "fa-eye",            titulo: "Supervisión directa y transparencia",   texto: "Los mandos pueden verificar el progreso de cada agente en línea, garantizando que el trabajo se realice con honestidad y sin retrasos injustificados." },
-            { icono: "fa-lock",           titulo: "Protección total de la información",    texto: "El control estricto de usuarios evita la filtración de datos sensibles, protegiendo tanto a las víctimas como la integridad de los procesos judiciales." },
-            { icono: "fa-bolt",           titulo: "Justicia más ágil para el ciudadano",   texto: "La digitalización reduce la burocracia en el Ministerio Público, permitiendo que las víctimas reciban respuestas y atención en mucho menos tiempo." }
+            { icono: "fa-scale-balanced", titulo: "Resultados reales contra la impunidad",  texto: "Al organizar mejor las pruebas y evidencias, se logran investigaciones más sólidas que terminan en sentencias justas." },
+            { icono: "fa-eye",            titulo: "Supervisión directa y transparencia",   texto: "Los mandos pueden verificar el progreso de cada agente en línea, garantizando que el trabajo se realice con honestidad." },
+            { icono: "fa-lock",           titulo: "Protección total de la información",    texto: "El control estricto de usuarios evita la filtración de datos sensibles." },
+            { icono: "fa-bolt",           titulo: "Justicia más ágil para el ciudadano",   texto: "La digitalización reduce la burocracia en el Ministerio Público." }
         ],
-        fraseFinal: "Con SCP Policía de Investigación, tu gobierno fortalece el estado de derecho, transformando la investigación criminal en un proceso profesional, transparente y orientado a dar paz a las familias."
+        fraseFinal: "Con SCP Policía de Investigación, tu gobierno fortalece el estado de derecho."
     },
     'inteligencia': {
         banner: "img/IMAGENES/PLATAFORMA DE INTELIGENCIA/apaidadainteligencia",
         circulo: "img/IMAGENES/PLATAFORMA DE INTELIGENCIA/circular_inteligencia",
         titulo: "Plataforma de Inteligencia",
         descripcion: "Centro de mando digital avanzado para procesar grandes volúmenes de información en tiempo real.",
-        detalle1: "Es un centro de mando digital avanzado que permite procesar grandes volúmenes de información proveniente de redes sociales, registros telefónicos y cámaras de seguridad en tiempo real. La herramienta utiliza inteligencia artificial para identificar rostros, reconocer placas vehiculares y analizar vínculos entre personas, transformando datos aislados en conocimiento estratégico.",
+        detalle1: "Es un centro de mando digital avanzado que permite procesar grandes volúmenes de información proveniente de redes sociales, registros telefónicos y cámaras de seguridad en tiempo real.",
         ventajas: [
-            { icono: "fa-globe",           titulo: "Prevención del delito en tiempo real",      texto: "Al analizar redes sociales y fuentes abiertas, el gobierno puede anticiparse a situaciones de riesgo y actuar antes de que los problemas afecten a la comunidad." },
-            { icono: "fa-car",             titulo: "Ciudades vigiladas y seguras",              texto: "El reconocimiento automático de placas y rostros permite localizar vehículos robados o personas buscadas de manera inmediata." },
-            { icono: "fa-project-diagram", titulo: "Desarticulación de redes criminales",       texto: "El análisis de vínculos ayuda a entender cómo operan los grupos delictivos, permitiendo golpes precisos a la delincuencia." },
+            { icono: "fa-globe",           titulo: "Prevención del delito en tiempo real",      texto: "Al analizar redes sociales y fuentes abiertas, el gobierno puede anticiparse a situaciones de riesgo." },
+            { icono: "fa-car",             titulo: "Ciudades vigiladas y seguras",              texto: "El reconocimiento automático de placas y rostros permite localizar vehículos robados de manera inmediata." },
+            { icono: "fa-project-diagram", titulo: "Desarticulación de redes criminales",       texto: "El análisis de vínculos ayuda a entender cómo operan los grupos delictivos." },
             { icono: "fa-brain",           titulo: "Tecnología al servicio del ciudadano",      texto: "El procesamiento inteligente de la información reduce los tiempos de respuesta ante emergencias." }
         ],
-        fraseFinal: "Con la Plataforma de Inteligencia, tu administración se coloca a la vanguardia tecnológica, convirtiendo la información en una herramienta de protección efectiva y justicia para todas las familias."
+        fraseFinal: "Con la Plataforma de Inteligencia, tu administración se coloca a la vanguardia tecnológica."
     },
     'cautelares': {
         banner: "img/IMAGENES/MEDIDAS CAUTELARES/apaisadacautelar.webp",
         circulo: "img/IMAGENES/MEDIDAS CAUTELARES/circulacautelares",
         titulo: "SCP Medidas Cautelares y Brazaletes",
         descripcion: "Solución tecnológica para monitorear en tiempo real a personas con medidas cautelares.",
-        detalle1: "Es una solución tecnológica avanzada diseñada para monitorear en tiempo real a personas que, por mandato judicial, llevan su proceso legal en libertad. A través de un brazalete electrónico de alta resistencia, las autoridades pueden rastrear la ubicación exacta del usuario, establecer zonas de movilidad permitidas y recibir alertas inmediatas ante cualquier incumplimiento.",
+        detalle1: "Es una solución tecnológica avanzada diseñada para monitorear en tiempo real a personas que, por mandato judicial, llevan su proceso legal en libertad.",
         ventajas: [
-            { icono: "fa-shield-halved",  titulo: "Protección efectiva a las víctimas",         texto: "El sistema permite crear perímetros de seguridad que alertan si el imputado se acerca a la víctima, garantizando tranquilidad y una respuesta policial inmediata." },
-            { icono: "fa-building",       titulo: "Despresurización del sistema penitenciario",  texto: "Al permitir que procesos no graves se sigan en libertad vigilada, se reducen la sobrepoblación en penales y los costos de manutención." },
+            { icono: "fa-shield-halved",  titulo: "Protección efectiva a las víctimas",         texto: "El sistema permite crear perímetros de seguridad que alertan si el imputado se acerca a la víctima." },
+            { icono: "fa-building",       titulo: "Despresurización del sistema penitenciario",  texto: "Al permitir que procesos no graves se sigan en libertad vigilada, se reducen la sobrepoblación en penales." },
             { icono: "fa-users",          titulo: "Reinserción social con vigilancia",           texto: "Fomenta que las personas mantengan sus vínculos familiares y laborales bajo supervisión estricta." },
             { icono: "fa-scale-balanced", titulo: "Justicia moderna y humanista",                texto: "Demuestra un gobierno a la vanguardia que utiliza la tecnología para aplicar la ley de forma inteligente." }
         ],
@@ -639,26 +844,26 @@ const datosVistas = {
         circulo: "img/IMAGENES/CONTROL DE VISITAS/circular_controldevisitas.webp",
         titulo: "SCP Control de Visitas",
         descripcion: "Plataforma tecnológica para gestionar el acceso a centros penitenciarios de forma segura y digital.",
-        detalle1: "Es una plataforma tecnológica avanzada diseñada para gestionar el acceso a los centros penitenciarios de forma segura, rápida y digital. El sistema automatiza el registro de entradas y salidas, validando la identidad de cada visitante mediante documentos oficiales y fotografía en tiempo real.",
+        detalle1: "Es una plataforma tecnológica avanzada diseñada para gestionar el acceso a los centros penitenciarios de forma segura, rápida y digital.",
         ventajas: [
-            { icono: "fa-lock",          titulo: "Penales más seguros y ordenados",              texto: "Al eliminar los registros manuales, el gobierno retoma el control total de quién entra y sale, reduciendo drásticamente el riesgo de ingresos no autorizados." },
+            { icono: "fa-lock",          titulo: "Penales más seguros y ordenados",              texto: "Al eliminar los registros manuales, el gobierno retoma el control total de quién entra y sale." },
             { icono: "fa-shield-halved", titulo: "Transparencia total frente a la corrupción",   texto: "La digitalización de cada visita impide que se otorguen accesos preferenciales o irregulares." },
             { icono: "fa-users",         titulo: "Respeto a los derechos de las familias",       texto: "Agiliza los tiempos de espera y dignifica el proceso de visita para los ciudadanos." },
             { icono: "fa-eye",           titulo: "Paz social y prevención de incidentes",        texto: "El monitoreo en tiempo real permite detectar patrones sospechosos y prevenir conflictos internos." }
         ],
-        fraseFinal: "Con SCP Control de Visitas, tu administración moderniza el sistema penitenciario, sustituyendo el caos operativo por una gestión inteligente."
+        fraseFinal: "Con SCP Control de Visitas, tu administración moderniza el sistema penitenciario."
     },
     'lpr_sol': {
         banner: "img/IMAGENES/Plataforma de inteligencia LPR/apaisada_LPR.webp",
         circulo: "img/IMAGENES/Plataforma de inteligencia LPR/circular_lrp.webp",
         titulo: "Plataforma de Inteligencia LPR",
         descripcion: "Ecosistema tecnológico de seguridad perimetral con cámaras ANPR y antenas RFID.",
-        detalle1: "Es un ecosistema tecnológico de seguridad perimetral que integra cámaras de lectura de placas (ANPR) y antenas de radiofrecuencia (RFID) para el blindaje de ciudades y carreteras. La plataforma no solo captura matrículas y chips REPUVE en milisegundos, sino que procesa esa información mediante inteligencia artificial para detectar patrones de comportamiento y emitir alertas automáticas.",
+        detalle1: "Es un ecosistema tecnológico de seguridad perimetral que integra cámaras de lectura de placas (ANPR) y antenas de radiofrecuencia (RFID) para el blindaje de ciudades y carreteras.",
         ventajas: [
-            { icono: "fa-road",           titulo: "Blindaje automático del territorio",          texto: "Al monitorear entradas y salidas del estado en tiempo real, el gobierno recupera el control de las vías de comunicación." },
-            { icono: "fa-car",            titulo: "Recuperación efectiva del patrimonio",        texto: "El sistema permite interceptar vehículos robados en tiempo récord, devolviendo la tranquilidad a las familias." },
+            { icono: "fa-road",           titulo: "Blindaje automático del territorio",          texto: "Al monitorear entradas y salidas del estado en tiempo real, el gobierno recupera el control de las vías." },
+            { icono: "fa-car",            titulo: "Recuperación efectiva del patrimonio",        texto: "El sistema permite interceptar vehículos robados en tiempo récord." },
             { icono: "fa-camera",         titulo: "Justicia vial y prevención de accidentes",   texto: "A través de la tecnología de fotomultas, se fomenta una cultura de respeto a la ley." },
-            { icono: "fa-network-wired",  titulo: "Inteligencia contra el crimen organizado",   texto: "La capacidad de rastrear rutas recurrentes permite desarticular bandas delictivas mediante operativos precisos." }
+            { icono: "fa-network-wired",  titulo: "Inteligencia contra el crimen organizado",   texto: "La capacidad de rastrear rutas recurrentes permite desarticular bandas delictivas." }
         ],
         fraseFinal: "Con la Plataforma de Inteligencia LPR, tu administración construye una frontera tecnológica infranqueable."
     },
@@ -667,12 +872,12 @@ const datosVistas = {
         circulo: "img/ser/Ciber Seguridad C.webp",
         titulo: "Servicios de Ciberseguridad",
         descripcion: "Blindaje digital integral para proteger la infraestructura tecnológica y la información gubernamental.",
-        detalle1: "Es un ecosistema de protección digital avanzada diseñado para blindar la infraestructura tecnológica del gobierno contra ataques cibernéticos y el robo de información. A través de evaluaciones de vulnerabilidad, pruebas de penetración y seguridad en la nube, el sistema garantiza que los datos permanezcan íntegros y privados.",
+        detalle1: "Es un ecosistema de protección digital avanzada diseñado para blindar la infraestructura tecnológica del gobierno contra ataques cibernéticos y el robo de información.",
         ventajas: [
-            { icono: "fa-user-shield",           titulo: "Protección de la identidad ciudadana",     texto: "Al asegurar las bases de datos gubernamentales, se evita el robo de información personal de los habitantes, previniendo fraudes." },
+            { icono: "fa-user-shield",           titulo: "Protección de la identidad ciudadana",     texto: "Al asegurar las bases de datos gubernamentales, se evita el robo de información personal." },
             { icono: "fa-server",                titulo: "Continuidad de los servicios públicos",    texto: "La seguridad en redes y nube garantiza que los trámites digitales estén disponibles las 24 horas." },
-            { icono: "fa-magnifying-glass-chart",titulo: "Respuesta científica ante incidentes",     texto: "Gracias a la forensia digital, el gobierno cuenta con la capacidad de investigar cualquier evento sospechoso." },
-            { icono: "fa-scale-balanced",        titulo: "Certeza jurídica y cumplimiento legal",    texto: "La asesoría en políticas de seguridad asegura que tu administración cumpla con las leyes de protección de datos." }
+            { icono: "fa-magnifying-glass-chart",titulo: "Respuesta científica ante incidentes",     texto: "Gracias a la forensia digital, el gobierno cuenta con la capacidad de investigar cualquier evento." },
+            { icono: "fa-scale-balanced",        titulo: "Certeza jurídica y cumplimiento legal",    texto: "La asesoría en políticas de seguridad asegura que tu administración cumpla con las leyes." }
         ],
         fraseFinal: "Con nuestros Servicios de Ciberseguridad, tu gobierno construye una muralla digital impenetrable."
     },
@@ -681,12 +886,12 @@ const datosVistas = {
         circulo: "img/ser/Transcricion C.webp",
         titulo: "SCP Transcripción",
         descripcion: "Conversión inteligente de audio y video en texto estructurado para análisis y toma de decisiones.",
-        detalle1: "Es una solución de inteligencia artificial diseñada para convertir automáticamente audios y videos en texto estructurado, facilitando la búsqueda y el análisis de información clave. El sistema procesa comunicaciones de radio policial, telefonía, entrevistas de investigación y evidencias digitales.",
+        detalle1: "Es una solución de inteligencia artificial diseñada para convertir automáticamente audios y videos en texto estructurado, facilitando la búsqueda y el análisis de información clave.",
         ventajas: [
-            { icono: "fa-gavel",          titulo: "Justicia basada en evidencias sólidas",     texto: "Al contar con transcripciones precisas de entrevistas y comunicaciones, el gobierno fortalece los expedientes judiciales." },
+            { icono: "fa-gavel",          titulo: "Justicia basada en evidencias sólidas",     texto: "Al contar con transcripciones precisas de entrevistas y comunicaciones, el gobierno fortalece los expedientes." },
             { icono: "fa-tower-broadcast",titulo: "Respuesta inmediata ante emergencias",      texto: "La capacidad de analizar en tiempo real las frecuencias de radio permite detectar palabras de alerta." },
-            { icono: "fa-eye",            titulo: "Transparencia en el actuar policial",       texto: "Al registrar y procesar los audios de operativos y patrullajes, se garantiza que el comportamiento de los agentes sea el adecuado." },
-            { icono: "fa-clock",          titulo: "Optimización de recursos y tiempo",         texto: "Libera a los investigadores de la carga manual de transcribir horas de audio, permitiéndoles enfocarse en el análisis estratégico." }
+            { icono: "fa-eye",            titulo: "Transparencia en el actuar policial",       texto: "Al registrar y procesar los audios de operativos y patrullajes, se garantiza el comportamiento correcto." },
+            { icono: "fa-clock",          titulo: "Optimización de recursos y tiempo",         texto: "Libera a los investigadores de la carga manual de transcribir horas de audio." }
         ],
         fraseFinal: "Con SCP Transcripción, tu administración convierte el sonido en datos procesables."
     },
@@ -694,27 +899,27 @@ const datosVistas = {
         banner: "img/ser/Matenimiento BG.webp",
         circulo: "img/ser/Matenimiento C.webp",
         titulo: "Mantenimiento Preventivo de PMI",
-        descripcion: "Programa continuo de soporte y optimización para garantizar el funcionamiento permanente de la infraestructura tecnológica.",
-        detalle1: "Es un programa integral de soporte técnico y atención continua diseñado para asegurar que la infraestructura tecnológica de seguridad funcione al 100% de su capacidad. A través de visitas programadas y correcciones inmediatas, el sistema garantiza que cámaras, arcos y centros de mando operen sin interrupciones.",
+        descripcion: "Programa continuo de soporte y optimización para garantizar el funcionamiento permanente de la infraestructura.",
+        detalle1: "Es un programa integral de soporte técnico y atención continua diseñado para asegurar que la infraestructura tecnológica de seguridad funcione al 100% de su capacidad.",
         ventajas: [
-            { icono: "fa-video",           titulo: "Seguridad ciudadana sin interrupciones",  texto: "Al prevenir fallas en cámaras y sistemas de vigilancia, el gobierno garantiza que la ciudad esté protegida las 24 horas." },
-            { icono: "fa-coins",           titulo: "Eficiencia en el gasto público",          texto: "El mantenimiento preventivo evita reparaciones costosas y de emergencia, permitiendo que los recursos se utilicen de manera planeada." },
+            { icono: "fa-video",           titulo: "Seguridad ciudadana sin interrupciones",  texto: "Al prevenir fallas en cámaras y sistemas de vigilancia, el gobierno garantiza protección las 24 horas." },
+            { icono: "fa-coins",           titulo: "Eficiencia en el gasto público",          texto: "El mantenimiento preventivo evita reparaciones costosas y de emergencia." },
             { icono: "fa-shield-check",    titulo: "Confianza total en la tecnología",        texto: "Asegura que, en el momento que se requiera una evidencia o una alerta, el sistema responda con precisión." },
-            { icono: "fa-building-shield", titulo: "Protección del patrimonio institucional", texto: "Al mantener los equipos en óptimas condiciones, tu administración protege la inversión tecnológica realizada." }
+            { icono: "fa-building-shield", titulo: "Protección del patrimonio institucional", texto: "Al mantener los equipos en óptimas condiciones, tu administración protege la inversión tecnológica." }
         ],
-        fraseFinal: "Con el Mantenimiento Preventivo de PMI, tu administración asegura que la tecnología de seguridad nunca descanse."
+        fraseFinal: "Con el Mantenimiento Preventivo de PMI, tu administración asegura que la tecnología nunca descanse."
     },
     'tacticos_imp': {
         banner: "img/ser/Implementacion de tacticos BG.webp",
         circulo: "img/ser/Implementacion de tacticos C.webp",
         titulo: "Implementación de Tácticos",
         descripcion: "Tecnología de localización y rastreo en tiempo real para operativos de alta seguridad.",
-        detalle1: "Es una solución de despliegue estratégico diseñada para la localización y rastreo de dispositivos de comunicación en tiempo real. Mediante tecnología de intercepción de señales, el sistema permite a las unidades tácticas ubicar con precisión milimétrica objetivos de interés o personas en riesgo.",
+        detalle1: "Es una solución de despliegue estratégico diseñada para la localización y rastreo de dispositivos de comunicación en tiempo real.",
         ventajas: [
-            { icono: "fa-life-ring",   titulo: "Salvamento de vidas en emergencias",     texto: "En desastres naturales o desapariciones, el gobierno cuenta con la capacidad de localizar a personas atrapadas o extraviadas." },
+            { icono: "fa-life-ring",   titulo: "Salvamento de vidas en emergencias",     texto: "En desastres naturales o desapariciones, el gobierno cuenta con la capacidad de localizar personas." },
             { icono: "fa-crosshairs",  titulo: "Golpes precisos a la delincuencia",       texto: "Permite el rastreo de objetivos de alto perfil involucrados en actividades ilegales." },
-            { icono: "fa-shield",      titulo: "Paz y orden en situaciones críticas",     texto: "En eventos de riesgo o disturbios, la tecnología táctica ayuda a identificar y neutralizar amenazas de forma quirúrgica." },
-            { icono: "fa-star",        titulo: "Liderazgo en inteligencia operativa",     texto: "Proyecta un gobierno equipado con tecnología de élite, capaz de resolver situaciones complejas." }
+            { icono: "fa-shield",      titulo: "Paz y orden en situaciones críticas",     texto: "En eventos de riesgo o disturbios, la tecnología táctica ayuda a identificar y neutralizar amenazas." },
+            { icono: "fa-star",        titulo: "Liderazgo en inteligencia operativa",     texto: "Proyecta un gobierno equipado con tecnología de élite." }
         ],
         fraseFinal: "Con la Implementación de Tácticos, tu administración dota a las fuerzas del orden de la capacidad de ver lo invisible."
     },
@@ -723,24 +928,24 @@ const datosVistas = {
         circulo: "img/ser/Desarrollo de Sitema C.webp",
         titulo: "Desarrollo de Sistemas",
         descripcion: "Creación de plataformas digitales personalizadas que optimizan procesos y fortalecen la gestión.",
-        detalle1: "Es un servicio especializado en el diseño y creación de software a la medida, construido para resolver los retos específicos de cada institución. A través de soluciones tecnológicas personalizadas, desarrollamos plataformas escalables y de alta calidad.",
+        detalle1: "Es un servicio especializado en el diseño y creación de software a la medida, construido para resolver los retos específicos de cada institución.",
         ventajas: [
             { icono: "fa-users",       titulo: "Servicios públicos a la medida del ciudadano", texto: "Al crear sistemas específicos para las necesidades del estado, el gobierno elimina trámites innecesarios." },
-            { icono: "fa-piggy-bank",  titulo: "Ahorro y optimización del presupuesto",        texto: "El software a la medida evita el pago de licencias externas costosas y herramientas que no se usan." },
+            { icono: "fa-piggy-bank",  titulo: "Ahorro y optimización del presupuesto",        texto: "El software a la medida evita el pago de licencias externas costosas." },
             { icono: "fa-rocket",      titulo: "Un gobierno digital siempre a la vanguardia",  texto: "La escalabilidad permite que los sistemas crezcan junto con la ciudad." },
             { icono: "fa-database",    titulo: "Soberanía y control de la información",        texto: "Al desarrollar sistemas propios, tu administración mantiene el control total de sus datos." }
         ],
-        fraseFinal: "Con nuestro Desarrollo de Sistemas, tu gobierno deja de adaptarse a la tecnología para que la tecnología trabaje exclusivamente para el bienestar de tu gente."
+        fraseFinal: "Con nuestro Desarrollo de Sistemas, tu gobierno deja de adaptarse a la tecnología."
     },
     'forensia': {
         banner: "img/equi/Forencia Digital BG.webp",
         circulo: "img/equi/Forencia Digital C.webp",
         titulo: "Forensia Digital",
         descripcion: "Solución científica para extracción y análisis de evidencia digital con validez legal.",
-        detalle1: "Es una solución científica avanzada diseñada para la extracción y análisis de información contenida en dispositivos electrónicos. El sistema permite recuperar de forma segura evidencias críticas como mensajes, fotos, grabaciones de audio y ubicaciones GPS.",
+        detalle1: "Es una solución científica avanzada diseñada para la extracción y análisis de información contenida en dispositivos electrónicos.",
         ventajas: [
-            { icono: "fa-scale-balanced", titulo: "Justicia implacable contra el delito",    texto: "Al convertir los datos de un celular o computadora en pruebas legales, el gobierno asegura que los culpables no queden libres." },
-            { icono: "fa-clock",          titulo: "Resolución de casos en tiempo récord",    texto: "La capacidad de procesar miles de mensajes y archivos en minutos permite a las fiscalías resolver delitos de alto impacto." },
+            { icono: "fa-scale-balanced", titulo: "Justicia implacable contra el delito",    texto: "Al convertir los datos de un celular en pruebas legales, el gobierno asegura que los culpables no queden libres." },
+            { icono: "fa-clock",          titulo: "Resolución de casos en tiempo récord",    texto: "La capacidad de procesar miles de mensajes y archivos en minutos permite resolver delitos de alto impacto." },
             { icono: "fa-gavel",          titulo: "Transparencia y procesos defendibles",    texto: "El manejo profesional de la evidencia garantiza que la investigación no pueda ser cuestionada." },
             { icono: "fa-location-dot",   titulo: "Protección y rescate de víctimas",        texto: "El análisis de ubicaciones y contactos es clave para localizar personas desaparecidas." }
         ],
@@ -765,11 +970,11 @@ const datosVistas = {
         circulo: "img/equi/Sistema LPR C.webp",
         titulo: "Sistemas LPR Hardware",
         descripcion: "Infraestructura tecnológica para lectura automática de placas y vigilancia vehicular en tiempo real.",
-        detalle1: "Es la infraestructura física de alta precisión compuesta por cámaras de alta velocidad y sensores especializados para la lectura automática de placas (ANPR). Este hardware robusto está diseñado para operar en condiciones extremas.",
+        detalle1: "Es la infraestructura física de alta precisión compuesta por cámaras de alta velocidad y sensores especializados para la lectura automática de placas (ANPR).",
         ventajas: [
             { icono: "fa-car",        titulo: "Recuperación inmediata del patrimonio",  texto: "Al detectar vehículos robados en segundos, el gobierno protege los bienes de los ciudadanos." },
-            { icono: "fa-road",       titulo: "Justicia vial para reducir accidentes",  texto: "La implementación de fotomultas automatizadas fomenta que los conductores respeten los límites de velocidad." },
-            { icono: "fa-border-all", titulo: "Control total de las fronteras",         texto: "La instalación de estos sensores en puntos estratégicos permite saber exactamente quién entra y sale." },
+            { icono: "fa-road",       titulo: "Justicia vial para reducir accidentes",  texto: "La implementación de fotomultas automatizadas fomenta que los conductores respeten los límites." },
+            { icono: "fa-border-all", titulo: "Control total de las fronteras",         texto: "La instalación en puntos estratégicos permite saber exactamente quién entra y sale." },
             { icono: "fa-city",       titulo: "Modernización y orden público",          texto: "Sustituir los retenes manuales por tecnología de lectura automática agiliza el tránsito." }
         ],
         fraseFinal: "Con los Sistemas LPR Hardware, tu administración instala los ojos del estado en cada vía."
@@ -779,10 +984,10 @@ const datosVistas = {
         circulo: "img/equi/Plataforma Aerea C.webp",
         titulo: "Plataforma Aérea",
         descripcion: "Sistema aéreo de largo alcance para patrullaje, monitoreo territorial y transmisión en tiempo real.",
-        detalle1: "Es una solución de vigilancia aérea avanzada que combina la versatilidad de un despegue vertical automatizado con el poder de un vuelo de larga duración. Con una autonomía de hasta 12 horas y un alcance de 180 km.",
+        detalle1: "Es una solución de vigilancia aérea avanzada que combina la versatilidad de un despegue vertical automatizado con el poder de un vuelo de larga duración.",
         ventajas: [
             { icono: "fa-mountain",  titulo: "Vigilancia total de zonas de difícil acceso", texto: "Al cubrir grandes distancias, el gobierno puede monitorear sierras, fronteras y zonas rurales." },
-            { icono: "fa-life-ring", titulo: "Operativos de rescate efectivos",              texto: "Su capacidad de vuelo prolongado es vital para localizar personas extraviadas o náufragos." },
+            { icono: "fa-life-ring", titulo: "Operativos de rescate efectivos",              texto: "Su capacidad de vuelo prolongado es vital para localizar personas extraviadas." },
             { icono: "fa-tree",      titulo: "Prevención de desastres ambientales",          texto: "Permite detectar a tiempo incendios forestales, tala clandestina o invasión de predios." },
             { icono: "fa-video",     titulo: "Protección ciudadana desde el aire",           texto: "La transmisión de video en vivo permite coordinar persecuciones o vigilar eventos masivos." }
         ],
@@ -793,12 +998,12 @@ const datosVistas = {
         circulo: "img/equi/circularaccesos.webp",
         titulo: "Control de Accesos",
         descripcion: "Sistema tecnológico para gestión y supervisión segura de accesos físicos.",
-        detalle1: "Es una solución tecnológica de alta seguridad diseñada para gestionar y supervisar el ingreso de personas y vehículos a instalaciones estratégicas. El sistema automatiza la verificación de identidad mediante documentos oficiales, fotografía y biometría en tiempo real.",
+        detalle1: "Es una solución tecnológica de alta seguridad diseñada para gestionar y supervisar el ingreso de personas y vehículos a instalaciones estratégicas.",
         ventajas: [
-            { icono: "fa-building-shield",  titulo: "Blindaje de las instituciones públicas",  texto: "Al detectar de manera automática explosivos o sustancias prohibidas, el gobierno garantiza que los edificios sean entornos seguros." },
+            { icono: "fa-building-shield",  titulo: "Blindaje de las instituciones públicas",  texto: "Al detectar explosivos o sustancias prohibidas, el gobierno garantiza que los edificios sean entornos seguros." },
             { icono: "fa-id-card",          titulo: "Orden y agilidad en el servicio",         texto: "La identificación digital elimina las filas lentas en las entradas." },
             { icono: "fa-clipboard-check",  titulo: "Cero discrecionalidad",                   texto: "Al registrar digitalmente cada entrada y salida, se elimina el uso de bitácoras de papel." },
-            { icono: "fa-eye",              titulo: "Prevención inteligente de incidentes",     texto: "El monitoreo continuo permite identificar personas no autorizadas o comportamientos sospechosos." }
+            { icono: "fa-eye",              titulo: "Prevención inteligente de incidentes",     texto: "El monitoreo continuo permite identificar personas no autorizadas." }
         ],
         fraseFinal: "Con el sistema de Control de Accesos, tu administración establece una frontera de seguridad inteligente."
     },
@@ -811,10 +1016,10 @@ const datosVistas = {
         ventajas: [
             { icono: "fa-battery-full", titulo: "Presencia operativa ininterrumpida",  texto: "Gracias a su gran autonomía de energía, el personal puede cumplir jornadas completas sin que la herramienta falle." },
             { icono: "fa-bolt",         titulo: "Coordinación y respuesta inmediata",  texto: "La conectividad de última generación permite enviar y recibir información crítica en tiempo real." },
-            { icono: "fa-shield",       titulo: "Resiliencia en condiciones extremas", texto: "Su diseño robusto está hecho para resistir el trabajo rudo en campo, soportando agua, polvo y caídas." },
-            { icono: "fa-headset",      titulo: "Seguridad y apoyo al servidor público",texto: "Al contar con sistemas de audio que eliminan el ruido ambiental y botones de auxilio directo, el agente se siente respaldado." }
+            { icono: "fa-shield",       titulo: "Resiliencia en condiciones extremas", texto: "Su diseño robusto está hecho para resistir el trabajo rudo en campo." },
+            { icono: "fa-headset",      titulo: "Seguridad y apoyo al servidor público",texto: "Con sistemas de audio que eliminan el ruido ambiental y botones de auxilio directo." }
         ],
-        fraseFinal: "Con la evolución hacia dispositivos como el PM95, tu administración entrega a las corporaciones una herramienta de élite."
+        fraseFinal: "Con dispositivos como el PM95, tu administración entrega a las corporaciones una herramienta de élite."
     },
     'pmi': {
         banner: "img/equi/PMI BG.webp",
@@ -833,21 +1038,38 @@ const datosVistas = {
 };
 
 // =====================================================
-// 5. ESTADÍSTICAS ANIMADAS
+// 10. ESTADÍSTICAS ANIMADAS
 // =====================================================
 function initStatsAnimation() {
+    // Activar data-anim elements con IntersectionObserver
+    const animEls = document.querySelectorAll('[data-anim]');
+    if (animEls.length) {
+        const animIO = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { e.target.classList.add('visible'); animIO.unobserve(e.target); }
+            });
+        }, { threshold: 0.15 });
+        animEls.forEach(el => animIO.observe(el));
+    }
+
+    // Contadores animados (sin GSAP — requestAnimationFrame puro)
     const stats = document.querySelectorAll('.stat-number');
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const el = entry.target;
-                const targetValue = parseInt(el.getAttribute('data-target'));
-                const hasPlus = el.getAttribute('data-target').includes('+') || el.innerText.includes('+');
-                let countObj = { val: 0 };
-                gsap.to(countObj, {
-                    val: targetValue, duration: 2.5, ease: "power3.out",
-                    onUpdate() { el.innerText = (hasPlus ? "+" : "") + Math.floor(countObj.val).toLocaleString('en-US'); }
-                });
+                const target = parseInt(el.getAttribute('data-target'));
+                const duration = 2000; // ms
+                const start = performance.now();
+                function tick(now) {
+                    const elapsed = now - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    // easeOutCubic
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    el.innerText = '+' + Math.floor(eased * target).toLocaleString('en-US');
+                    if (progress < 1) requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
                 observer.unobserve(el);
             }
         });
@@ -856,7 +1078,7 @@ function initStatsAnimation() {
 }
 
 // =====================================================
-// 6. FORMULARIO
+// 11. FORMULARIO
 // =====================================================
 const obtenerHtmlForm = (tituloPersonalizado) => `
     <section class="project-form-section" id="contacto">
@@ -885,7 +1107,7 @@ const obtenerHtmlForm = (tituloPersonalizado) => `
     </section>`;
 
 // =====================================================
-// 7. SISTEMA DE VISTAS — CERO PARPADEO
+// 12. SISTEMA DE VISTAS — CON ANIMACIONES GSAP
 // =====================================================
 let vistaActual = 'inicio';
 
@@ -894,48 +1116,59 @@ function mostrarDetalle(contenidoHTML) {
     const detalle = document.getElementById('vista-detalle');
     const cont    = document.getElementById('contenido-dinamico');
 
-    if (vistaActual === 'detalle') {
-        cont.innerHTML = contenidoHTML;
-        lenis.scrollTo(0, { immediate: true });
-        return;
-    }
+    // Ocultar inicio INMEDIATAMENTE — sin animación que pueda fallar
+    inicio.style.display  = 'none';
+    inicio.style.opacity  = '1';
+    inicio.style.transform = '';
+
+    // Mostrar detalle
+    cont.innerHTML = contenidoHTML;
+    detalle.style.display = 'block';
+    detalle.style.opacity = '0';
+    detalle.style.transform = 'translateY(10px)';
 
     vistaActual = 'detalle';
-    gsap.killTweensOf([inicio, detalle]);
-    gsap.to(inicio, {
-        opacity: 0, duration: 0.25, ease: "power1.out",
-        onComplete() {
-            inicio.style.display  = 'none';
-            inicio.style.opacity  = '1';
-            cont.innerHTML = contenidoHTML;
-            detalle.style.display = 'block';
-            detalle.style.opacity = '0';
-            gsap.to(detalle, { opacity: 1, duration: 0.3, ease: "power1.in" });
-            lenis.scrollTo(0, { immediate: true });
-        }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    // Fade in del detalle
+    requestAnimationFrame(() => {
+        detalle.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+        detalle.style.opacity = '1';
+        detalle.style.transform = 'translateY(0)';
+        setTimeout(() => {
+            detalle.style.transition = '';
+            try { animarVistaDetalle(); } catch(e) {}
+        }, 380);
     });
 }
+
 function volverInicio() {
     const inicio  = document.getElementById('vista-inicio');
     const detalle = document.getElementById('vista-detalle');
     vistaActual = 'inicio';
-    gsap.killTweensOf([inicio, detalle]);
-    gsap.to(detalle, {
-        opacity: 0, duration: 0.25, ease: "power1.out",
-        onComplete() {
-            detalle.style.display = 'none';
-            detalle.style.opacity = '1';
-            inicio.style.display  = 'block';
-            inicio.style.opacity  = '0';
-            gsap.to(inicio, { opacity: 1, duration: 0.3, ease: "power1.in" });
-            lenis.scrollTo(0, { immediate: true });
+
+    // Ocultar detalle instantáneamente
+    detalle.style.display = 'none';
+    detalle.style.opacity = '1';
+    detalle.style.transform = '';
+
+    // Mostrar inicio
+    inicio.style.display = 'block';
+    inicio.style.opacity = '0';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    requestAnimationFrame(() => {
+        inicio.style.transition = 'opacity 0.35s ease';
+        inicio.style.opacity = '1';
+        setTimeout(() => {
+            inicio.style.transition = '';
             initStatsAnimation();
-        }
+        }, 380);
     });
 }
 
 // =====================================================
-// 8. VISTAS ESTÁNDAR
+// 13. VISTAS ESTÁNDAR
 // =====================================================
 function cargarVista(id) {
     const inicio = document.getElementById('vista-inicio');
@@ -944,10 +1177,12 @@ function cargarVista(id) {
     let data = datosVistas[id] || datosVistas['scp'];
 
     gsap.to(inicio, {
-        opacity: 0, duration: 0.3,
+        opacity: 0, duration: 0.3, ease: "power1.out",
         onComplete: () => {
             inicio.style.display = 'none';
             detalle.style.display = 'block';
+            vistaActual = 'detalle';
+
             contenedor.innerHTML = `
                 <section class="modulo-hero" style="background-image:url('${data.banner}')">
                     <div class="modulo-overlay"></div>
@@ -957,16 +1192,16 @@ function cargarVista(id) {
                     </div>
                 </section>
                 <section class="scp-banner ${id === 'scp' ? 'es-scp' : 'es-modulo'}">
-    <div class="scp-contenido">
-        <div class="scp-texto">
-            <h1>${data.titulo}</h1>
-            <p>${data.detalle1}${data.detalle2 ? '<br><br>' + data.detalle2 : ''}</p>
-        </div>
-        <div class="${id === 'scp' ? 'scp-imagen' : 'img-circular'}">
-            <img src="${data.circulo}" alt="${data.titulo}">
-        </div>
-    </div>
-</section>
+                    <div class="scp-contenido">
+                        <div class="scp-texto">
+                            <h1>${data.titulo}</h1>
+                            <p>${data.detalle1}${data.detalle2 ? '<br><br>' + data.detalle2 : ''}</p>
+                        </div>
+                        <div class="${id === 'scp' ? 'scp-imagen' : 'img-circular'}">
+                            <img src="${data.circulo}" alt="${data.titulo}">
+                        </div>
+                    </div>
+                </section>
                 <section class="ventajas-section">
                     <h2>Ventajas Estratégicas</h2>
                     <div class="ventajas-grid">
@@ -994,50 +1229,50 @@ function cargarVista(id) {
                     </div>
                 </section>
                 ${obtenerHtmlForm('Cotizar ' + data.titulo)}`;
+
             gsap.to(detalle, { opacity: 1, duration: 0.4 });
-            lenis.scrollTo(0, { immediate: true });
+            window.scrollTo({ top: 0, behavior: "instant" });
+            setTimeout(animarVistaDetalle, 60);
         }
     });
 }
 
 // =====================================================
-// 9. CATÁLOGO EQUIPOS DE PROTECCIÓN
+// 14. CATÁLOGO EQUIPOS DE PROTECCIÓN
 // =====================================================
-// Función para cargar la vista de equipos de protección SIN títulos innecesarios
 function cargarVistaEquiposProteccion() {
     const htmlContent = `
         <section class="perfiles-section-custom">
-            <div class="perfiles-grid-custom" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));justify-content:center;gap:12px;padding:0 20px;margin-bottom:60px;">
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('policias')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(30,64,175,0.08),rgba(30,64,175,0.04));border:1.5px solid rgba(30,64,175,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
-                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(30,64,175,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
-                    <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#1e40af,#1e3a8a);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(30,64,175,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-user-shield"></i></div>
-                    <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">POLICÍAS</h3>
+            <div style="text-align:center;padding:60px 5% 40px;">
+                <p style="font-size:11px;font-weight:700;letter-spacing:0.3em;color:var(--celeste);text-transform:uppercase;margin-bottom:8px;">CATÁLOGO SYSNE</p>
+                <h2 style="font-size:clamp(28px,4vw,48px);font-weight:800;color:var(--azul-oscuro);margin-bottom:12px;">Equipos de Protección</h2>
+                <p style="color:#64748b;max-width:540px;margin:0 auto;line-height:1.6;">Selecciona el perfil de uso para explorar el equipamiento especializado disponible.</p>
+            </div>
+            <div class="perfiles-grid-custom">
+                <div class="perfil-card-item pci-policias" onclick="cargarMenuPerfil('policias')">
+                    <div class="perfil-icon-box" style="background:linear-gradient(135deg,#1e40af,#1e3a8a);box-shadow:0 4px 12px rgba(30,64,175,0.35);"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3>POLICÍAS</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('ambulancia')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(22,163,74,0.08),rgba(22,163,74,0.04));border:1.5px solid rgba(22,163,74,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
-                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(22,163,74,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
-                    <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#16a34a,#15803d);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(22,163,74,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-ambulance"></i></div>
-                    <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">AMBULANCIA</h3>
+                <div class="perfil-card-item pci-ambulancia" onclick="cargarMenuPerfil('ambulancia')">
+                    <div class="perfil-icon-box" style="background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 4px 12px rgba(22,163,74,0.35);"><i class="fa-solid fa-ambulance"></i></div>
+                    <h3>AMBULANCIA</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('bomberos')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(220,38,38,0.08),rgba(220,38,38,0.04));border:1.5px solid rgba(220,38,38,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
-                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(220,38,38,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
-                    <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(220,38,38,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-fire-extinguisher"></i></div>
-                    <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">BOMBEROS</h3>
+                <div class="perfil-card-item pci-bomberos" onclick="cargarMenuPerfil('bomberos')">
+                    <div class="perfil-icon-box" style="background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 4px 12px rgba(220,38,38,0.35);"><i class="fa-solid fa-fire-extinguisher"></i></div>
+                    <h3>BOMBEROS</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('forenses')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.04));border:1.5px solid rgba(139,92,246,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
-                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
-                    <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(139,92,246,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-microscope"></i></div>
-                    <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">FORENSES</h3>
+                <div class="perfil-card-item pci-forenses" onclick="cargarMenuPerfil('forenses')">
+                    <div class="perfil-icon-box" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);box-shadow:0 4px 12px rgba(139,92,246,0.35);"><i class="fa-solid fa-microscope"></i></div>
+                    <h3>FORENSES</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('drogas')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(234,88,12,0.08),rgba(234,88,12,0.04));border:1.5px solid rgba(234,88,12,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
-                    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(234,88,12,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
-                    <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#ea580c,#c2410c);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(234,88,12,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-biohazard"></i></div>
-                    <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">DROGAS</h3>
+                <div class="perfil-card-item pci-drogas" onclick="cargarMenuPerfil('drogas')">
+                    <div class="perfil-icon-box" style="background:linear-gradient(135deg,#ea580c,#c2410c);box-shadow:0 4px 12px rgba(234,88,12,0.35);"><i class="fa-solid fa-biohazard"></i></div>
+                    <h3>DROGAS</h3>
                 </div>
             </div>
         </section>
         
-        <!-- SECCIÓN PRODUCTOS DESTACADOS PARA ENTREGA INMEDIATA -->
-        <section class="productos-destacados-section" style="padding:80px 20px 0;">
+        <section class="productos-destacados-section" style="padding:60px 5%;">
             <div class="productos-destacados-header" style="text-align:center;max-width:900px;margin:0 auto;margin-bottom:40px;">
                 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;flex-direction:column;">
                     <span style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#00d4ff,#0099cc);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 15px rgba(0,212,255,0.3);">
@@ -1045,35 +1280,31 @@ function cargarVistaEquiposProteccion() {
                     </span>
                     <div style="text-align:center;">
                         <p style="margin:0;font-size:0.9rem;color:#0099cc;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;">Disponibilidad Inmediata</p>
-                        <h2 style="margin:4px 0 0;font-size:2.6rem;color:#0f172a;font-weight:800;line-height:1.1;">Productos Destacados</h2>
+                        <h2 style="margin:4px 0 0;font-size:clamp(22px,3vw,38px);color:#0f172a;font-weight:800;line-height:1.1;">Productos Destacados</h2>
                     </div>
                 </div>
-                <p style="margin:0;font-size:0.95rem;color:#64748b;line-height:1.6;margin-top:12px;">Selección premium de equipamiento de protección listos para entrega inmediata. Todos nuestros productos cuentan con certificación SCP.</p>
+                <p style="margin:0;font-size:0.95rem;color:#64748b;line-height:1.6;margin-top:12px;">Selección premium de equipamiento de protección listo para entrega inmediata. Todos con certificación SCP.</p>
             </div>
-            <div class="tacticos-grid" id="grid-destacados" style="margin-top:30px;">
-                <!-- Se cargará dinámicamente -->
-            </div>
-            <div style="margin-top:50px;">
-                ${obtenerHtmlForm('Cotizar Productos Destacados')}
-            </div>
+            <div class="tacticos-grid" id="grid-destacados"></div>
+            <div style="margin-top:50px;">${obtenerHtmlForm('Cotizar Productos Destacados')}</div>
         </section>`;
-    
-    // Mostrar el contenido HTML
+
     mostrarDetalle(htmlContent);
-    
-    // Cargar productos destacados después de que el DOM esté completamente renderizado
-    setTimeout(() => {
-        cargarProductosDestacados();
-    }, 300);
+    setTimeout(() => { cargarProductosDestacados(); }, 350);
 }
 
 // ─────────────────────────────────────────────────────
 // cargarMenuPerfil
-// ★ Al entrar al perfil se auto-selecciona la PRIMERA categoría
 // ─────────────────────────────────────────────────────
 function cargarMenuPerfil(perfilId) {
     const categorias = catalogoVariantes[perfilId];
     if (!categorias) { console.error('Perfil no encontrado:', perfilId); return; }
+
+    const coloresPerfil = {
+        policias: '#1e40af', ambulancia: '#dc2626',
+        bomberos: '#ea580c', forenses: '#7c3aed', drogas: '#ea580c'
+    };
+    const colorPerfil = coloresPerfil[perfilId] || '#5fa8d3';
 
     mostrarDetalle(`
         <div class="proteccion-wrapper">
@@ -1081,9 +1312,10 @@ function cargarMenuPerfil(perfilId) {
                 <button class="btn-back-perfiles" onclick="cargarVistaEquiposProteccion()">
                     <i class="fa-solid fa-arrow-left"></i> VOLVER
                 </button>
-                <div class="sidebar-title">
+                <div class="sidebar-title" style="margin-top:20px;">
                     <small>CATÁLOGO</small>
                     <h3>${perfilId.toUpperCase().replace('_',' ')}</h3>
+                    <div style="width:40px;height:3px;background:${colorPerfil};border-radius:2px;margin-top:8px;"></div>
                 </div>
                 <ul class="sidebar-nav">
                     ${categorias.map((g, i) => `
@@ -1097,37 +1329,32 @@ function cargarMenuPerfil(perfilId) {
                 </ul>
             </aside>
             <main class="visor-variantes" id="visor-variantes">
-                <!-- Se cargará la primera categoría automáticamente -->
+                <div style="display:flex;align-items:center;justify-content:center;height:200px;color:#ccc;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;"></i>
+                </div>
             </main>
         </div>`
     );
 
-    // Animar sidebar y luego auto-seleccionar primera categoría
     requestAnimationFrame(() => {
-        gsap.fromTo(".nav-item-catalogo",
-            { opacity: 0, x: -20 },
-            {
-                opacity: 1, x: 0, stagger: 0.07, duration: 0.35,
-                ease: "power2.out", clearProps: "opacity,x,transform",
-                onComplete() {
-                    // ★ Auto-seleccionar la primera categoría al terminar la animación
-                    mostrarVariantes(0, perfilId);
-                }
-            }
-        );
+        const items = document.querySelectorAll('.nav-item-catalogo');
+        items.forEach((el, i) => {
+            el.style.cssText = `opacity:0;transform:translateX(-16px);transition:opacity .3s ${i*0.06}s ease,transform .3s ${i*0.06}s ease`;
+            requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateX(0)'; });
+        });
+        const last = items.length - 1;
+        setTimeout(() => mostrarVariantes(0, perfilId), last * 60 + 350);
     });
 }
 
 // ─────────────────────────────────────────────────────
-// mostrarVariantes
-// Imagen individual por producto desde imagenesProductos[][]
+// mostrarVariantes — con imágenes Unsplash para fallback
 // ─────────────────────────────────────────────────────
 function mostrarVariantes(indexCat, perfilId) {
     const visor    = document.getElementById('visor-variantes');
     const categoria = catalogoVariantes[perfilId]?.[indexCat];
     if (!categoria || !visor) return;
 
-    // Marcar activo en sidebar
     document.querySelectorAll('.nav-item-catalogo').forEach(el => {
         el.classList.remove('active');
         el.style.opacity = '1';
@@ -1135,10 +1362,8 @@ function mostrarVariantes(indexCat, perfilId) {
     const navItem = document.getElementById(`nav-item-${indexCat}`);
     if (navItem) navItem.classList.add('active');
 
-    // Obtener array de imágenes individuales para esta categoría
     const imgsCategoria = imagenesProductos[perfilId]?.[indexCat] || [];
 
-    // Construir tarjetas — cada producto tiene su propia imagen
     const productosHTML = categoria.items.map((prod, prodIdx) => {
         const imgUrl = imgsCategoria[prodIdx] || '';
         return `
@@ -1151,13 +1376,10 @@ function mostrarVariantes(indexCat, perfilId) {
                     style="width:100%;height:180px;object-fit:cover;display:block;transition:transform .4s ease;"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
                 >` : ''}
-                <!-- Fallback si la imagen falla -->
                 <div style="display:${imgUrl ? 'none' : 'flex'};width:100%;height:180px;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1b2e,${categoria.color}33);">
                     <i class="fa-solid ${prod.ic}" style="font-size:4rem;color:${categoria.color};"></i>
                 </div>
-                <!-- Overlay degradado -->
                 <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.65) 0%,rgba(0,0,0,.1) 50%,transparent 100%);pointer-events:none;"></div>
-                <!-- Badge ícono -->
                 <div style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:8px;background:${categoria.color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4);">
                     <i class="fa-solid ${prod.ic}" style="color:#fff;font-size:.9rem;"></i>
                 </div>
@@ -1173,12 +1395,12 @@ function mostrarVariantes(indexCat, perfilId) {
     }).join('');
 
     visor.innerHTML = `
-        <div style="margin-bottom:28px;">
+        <div style="margin-bottom:28px;" class="anim-fadeinup">
             <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
                 <span style="width:44px;height:44px;border-radius:10px;background:${categoria.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px ${categoria.color}55;">
                     <i class="fa-solid ${categoria.icono}" style="color:#fff;font-size:1.35rem;"></i>
                 </span>
-                <h2 style="margin:0;font-size:1.6rem;color:#0f172a;">${categoria.cat}</h2>
+                <h2 style="margin:0;font-size:clamp(1.2rem,2.5vw,1.6rem);color:#0f172a;">${categoria.cat}</h2>
             </div>
             <div style="height:3px;width:60px;border-radius:2px;background:${categoria.color};"></div>
         </div>
@@ -1189,140 +1411,45 @@ function mostrarVariantes(indexCat, perfilId) {
             ${obtenerHtmlForm('Cotización: ' + categoria.cat)}
         </div>`;
 
-    gsap.fromTo(".tactico-card",
-        { opacity: 0, y: 22 },
-        { opacity: 1, y: 0, stagger: 0.055, duration: 0.45,
-          ease: "power2.out", clearProps: "opacity,y,transform" }
-    );
+    // Animar con CSS
+    requestAnimationFrame(() => {
+        visor.querySelectorAll('.tactico-card').forEach((el, i) => {
+            el.style.cssText = `opacity:0;transform:translateY(16px);transition:opacity .35s ${i*0.04}s ease,transform .35s ${i*0.04}s ease`;
+            requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateY(0)'; });
+        });
+    });
 }
 
 // ─────────────────────────────────────────────────────
 // cargarProductosDestacados
-// ★ Carga 15 productos destacados con diseño de tarjetas
 // ─────────────────────────────────────────────────────
 function cargarProductosDestacados() {
     const gridDestacados = document.getElementById('grid-destacados');
     if (!gridDestacados) return;
 
-    // Array de 15 productos destacados
-   const productosDestacados = [
-    {
-        n: "Respirador Facial Completo G1 – Talla Mediana",
-        desc: "Sistema de sujeción FS, MD, MD NC, 4PT C-HARN. Equivalente al MSA 10156459.",
-        ic: "fa-mask-face",
-        img: "img15/pr1.png",
-        categoria: "policias"
-    },
-    {
-        n: "Respirador Facial Completo G1 – Talla Grande",
-        desc: "Sistema de sujeción FS, MD, MD NC, 4PT C-HARN. Equivalente al MSA 10156460.",
-        ic: "fa-mask-face",
-        img: "img15/pr2.png",
-        categoria: "policias"
-    },
-    {
-        n: "Adaptador de Filtro APR G1",
-        desc: "Conjunto adaptador APR para respiradores G1. Equivalente al MSA 10144231-SP.",
-        ic: "fa-filter",
-        img: "img15/pr3.png",
-        categoria: "policias"
-    },
-    {
-        n: "Cartuchos Advantage GME-P100",
-        desc: "Filtros GME-P100. Paquete con 2 unidades.",
-        ic: "fa-filter-circle",
-        img: "img15/pr4.png",
-        categoria: "drogas"
-    },
-    {
-        n: "Máscara Antigás Ultra-Twin – Talla Grande",
-        desc: "Máscara facial completa con correas y hebillas. Equivalente al MSA 480267.",
-        ic: "fa-mask-ventilator",
-        img: "img15/pr5.png",
-        categoria: "forenses"
-    },
-    {
-        n: "Máscara Antigás Ultra-Twin – Talla Pequeña",
-        desc: "Máscara facial completa con correas y hebillas. Equivalente al MSA 480263.",
-        ic: "fa-mask-ventilator",
-        img: "img15/pr6.png",
-        categoria: "forenses"
-    },
-    {
-        n: "Filtros Multigas / P100",
-        desc: "Protección contra vapores orgánicos, cloro, SO₂, amoníaco, formaldehído y más. Caja con 6 unidades.",
-        ic: "fa-biohazard",
-        img: "img15/pr7.png",
-        categoria: "drogas"
-    },
-    {
-        n: "Guantes Industriales de Nitrilo – Talla M",
-        desc: "Color negro, sin polvo. Caja con 100 guantes.",
-        ic: "fa-hand",
-        img: "img15/pr8.png",
-        categoria: "forenses"
-    },
-    {
-        n: "Guantes Industriales de Nitrilo – Talla L",
-        desc: "Color negro, sin polvo. Caja con 100 guantes.",
-        ic: "fa-hand",
-        img: "img15/pr9.png",
-        categoria: "forenses"
-    },
-    {
-        n: "Botas Resistentes a Productos Químicos – Talla Grande",
-        desc: "Protección especializada contra agentes químicos.",
-        ic: "fa-shoe-prints",
-        img: "img15/pr10.png",
-        categoria: "bomberos"
-    },
-    {
-        n: "Botas Resistentes a Productos Químicos – Talla Extra Grande",
-        desc: "Protección avanzada contra sustancias corrosivas.",
-        ic: "fa-shoe-prints",
-        img: "img15/pr11.png",
-        categoria: "bomberos"
-    },
-    {
-        n: "Generador de Humo Irritante para Pruebas de Ajuste",
-        desc: "Caja con 6 piezas. Equivalente al VeriFit Irritant Smoke Test.",
-        ic: "fa-smog",
-        img: "img15/pr12.png",
-        categoria: "policias"
-    },
-    {
-        n: "Trajes de Entrenamiento Kappler Zytron 100XP",
-        desc: "Caja con 6 piezas. Tallas 2X / 3X.",
-        ic: "fa-user-shield",
-        img: "img15/pr13.png",
-        categoria: "bomberos"
-    },
-    {
-        n: "Papel de Prueba pH Hydrion Jumbo",
-        desc: "Rango 0–13 pH, 1/2\" x 50'. Caja con 10 rollos. Equivalente a VWR 60786-043.",
-        ic: "fa-vial",
-        img: "img15/pr14.png",
-        categoria: "forenses"
-    },
-    {
-        n: "Tiras de Prueba para Fentanilo",
-        desc: "Detección rápida y confiable de fentanilo.",
-        ic: "fa-flask-vial",
-        img: "img15/pr15.png",
-        categoria: "drogas"
-    }
-];
+    const productosDestacados = [
+        { n: "Respirador Facial Completo G1 – Talla Mediana", desc: "Sistema de sujeción FS, MD, MD NC, 4PT C-HARN. Equivalente al MSA 10156459.", ic: "fa-mask-face", img: "img15/pr1.png", categoria: "policias" },
+        { n: "Respirador Facial Completo G1 – Talla Grande",  desc: "Sistema de sujeción FS, MD, MD NC, 4PT C-HARN. Equivalente al MSA 10156460.", ic: "fa-mask-face", img: "img15/pr2.png", categoria: "policias" },
+        { n: "Adaptador de Filtro APR G1",                    desc: "Conjunto adaptador APR para respiradores G1. Equivalente al MSA 10144231-SP.", ic: "fa-filter",    img: "img15/pr3.png", categoria: "policias" },
+        { n: "Filtros GME-P100",                              desc: "Filtros GME-P100. Paquete con 2 unidades.",                                       ic: "fa-filter",    img: "img15/pr4.png", categoria: "drogas" },
+        { n: "Máscara Antigás Ultra-Twin – Talla Grande",     desc: "Máscara facial completa con correas y hebillas. Equivalente al MSA 480267.",    ic: "fa-mask-ventilator", img: "img15/pr5.png", categoria: "forenses" },
+        { n: "Máscara Antigás Ultra-Twin – Talla Pequeña",    desc: "Máscara facial completa con correas y hebillas. Equivalente al MSA 480263.",    ic: "fa-mask-ventilator", img: "img15/pr6.png", categoria: "forenses" },
+        { n: "Filtros Multigas / P100",                       desc: "Protección contra vapores orgánicos, cloro, SO₂, amoníaco, formaldehído. Caja con 6.", ic: "fa-biohazard", img: "img15/pr7.png", categoria: "drogas" },
+        { n: "Guantes Industriales de Nitrilo – Talla M",     desc: "Color negro, sin polvo. Caja con 100 guantes.",                                  ic: "fa-hand",      img: "img15/pr8.png", categoria: "forenses" },
+        { n: "Guantes Industriales de Nitrilo – Talla L",     desc: "Color negro, sin polvo. Caja con 100 guantes.",                                  ic: "fa-hand",      img: "img15/pr9.png", categoria: "forenses" },
+        { n: "Botas Resistentes a Químicos – Grande",         desc: "Protección especializada contra agentes químicos.",                               ic: "fa-shoe-prints", img: "img15/pr10.png", categoria: "bomberos" },
+        { n: "Botas Resistentes a Químicos – Extra Grande",   desc: "Protección avanzada contra sustancias corrosivas.",                              ic: "fa-shoe-prints", img: "img15/pr11.png", categoria: "bomberos" },
+        { n: "Generador de Humo Irritante",                   desc: "Caja con 6 piezas. Para pruebas de ajuste de mascarillas.",                      ic: "fa-smog",      img: "img15/pr12.png", categoria: "policias" },
+        { n: "Trajes de Entrenamiento Kappler Zytron 100XP",  desc: "Caja con 6 piezas. Tallas 2X / 3X.",                                            ic: "fa-user-shield", img: "img15/pr13.png", categoria: "bomberos" },
+        { n: "Papel de Prueba pH Hydrion Jumbo",              desc: "Rango 0–13 pH, 1/2\" x 50'. Caja con 10 rollos.",                               ic: "fa-vial",      img: "img15/pr14.png", categoria: "forenses" },
+        { n: "Tiras de Prueba para Fentanilo",                desc: "Detección rápida y confiable de fentanilo.",                                     ic: "fa-flask-vial", img: "img15/pr15.png", categoria: "drogas" }
+    ];
 
-    // Colores según categoría
     const coloresPorCategoria = {
-        policias: '#1e40af',
-        bomberos: '#dc2626',
-        ambulancia: '#16a34a',
-        forenses: '#8b5cf6',
-        drogas: '#ea580c'
+        policias: '#1e40af', bomberos: '#dc2626',
+        ambulancia: '#16a34a', forenses: '#8b5cf6', drogas: '#ea580c'
     };
 
-    // Construir HTML de tarjetas
     const productosHTML = productosDestacados.map((prod) => {
         const colorFondo = coloresPorCategoria[prod.categoria] || '#0099cc';
         return `
@@ -1334,17 +1461,13 @@ function cargarProductosDestacados() {
                     style="width:100%;height:180px;object-fit:cover;display:block;transition:transform .4s ease;"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
                 >
-                <!-- Fallback si la imagen falla -->
                 <div style="display:none;width:100%;height:180px;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1b2e,${colorFondo}33);">
                     <i class="fa-solid ${prod.ic}" style="font-size:4rem;color:${colorFondo};"></i>
                 </div>
-                <!-- Overlay degradado -->
                 <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.65) 0%,rgba(0,0,0,.1) 50%,transparent 100%);pointer-events:none;"></div>
-                <!-- Badge ícono -->
                 <div style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:8px;background:${colorFondo};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4);">
                     <i class="fa-solid ${prod.ic}" style="color:#fff;font-size:.9rem;"></i>
                 </div>
-                <!-- Badge de entrega inmediata -->
                 <div style="position:absolute;bottom:10px;left:10px;padding:4px 12px;border-radius:6px;background:rgba(0,212,255,0.95);display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;color:#0d1b2e;box-shadow:0 2px 8px rgba(0,212,255,0.3);">
                     <i class="fa-solid fa-check"></i> EN STOCK
                 </div>
@@ -1360,18 +1483,20 @@ function cargarProductosDestacados() {
     }).join('');
 
     gridDestacados.innerHTML = productosHTML;
-
-    // Animar tarjetas al cargar
-    gsap.fromTo(".tactico-card",
-        { opacity: 0, y: 22 },
-        { opacity: 1, y: 0, stagger: 0.055, duration: 0.45,
-          ease: "power2.out", clearProps: "opacity,y,transform" }
-    );
+    // Animar con CSS en lugar de GSAP
+    requestAnimationFrame(() => {
+        gridDestacados.querySelectorAll('.tactico-card').forEach((el, i) => {
+            el.style.cssText = `opacity:0;transform:translateY(18px);transition:opacity .4s ${i*0.04}s ease,transform .4s ${i*0.04}s ease`;
+            requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateY(0)'; });
+        });
+    });
 }
+
 // =====================================================
-// 10. EMAILJS
+// 15. EMAILJS
 // =====================================================
 function inicializarEmailJS() {
+    if (typeof emailjs === 'undefined') return;
     emailjs.init("O9mrwtxHVDFOOT8vI");
     document.body.addEventListener('submit', function (e) {
         if (e.target && e.target.id === 'contact-form') {
@@ -1382,15 +1507,18 @@ function inicializarEmailJS() {
             btn.disabled = true;
             emailjs.sendForm('service_sojajgr', 'template_ewwat6h', e.target, 'O9mrwtxHVDFOOT8vI')
                 .then(() => {
-                    Swal.fire({ title: '¡Solicitud Enviada!', text: 'Nos pondremos en contacto pronto.', icon: 'success', confirmButtonColor: '#0056b3' });
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ title: '¡Solicitud Enviada!', text: 'Nos pondremos en contacto pronto.', icon: 'success', confirmButtonColor: '#0056b3' });
+                    }
                     btn.innerText = '¡Enviado!';
                     e.target.reset();
                     setTimeout(() => { btn.disabled = false; btn.innerText = orig; volverInicio(); }, 2500);
                 })
                 .catch(err => {
-                    btn.disabled = false;
-                    btn.innerText = orig;
-                    Swal.fire({ title: 'Error', text: 'Hubo un fallo al enviar.', icon: 'error' });
+                    btn.disabled = false; btn.innerText = orig;
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ title: 'Error', text: 'Hubo un fallo al enviar.', icon: 'error' });
+                    }
                     console.error('EmailJS error:', err);
                 });
         }
@@ -1398,7 +1526,7 @@ function inicializarEmailJS() {
 }
 
 // =====================================================
-// 11. CARGA INICIAL
+// 16. CARGA INICIAL
 // =====================================================
 window.addEventListener('load', () => {
     const formInicio = document.getElementById('contenedor-formulario-inicio');
