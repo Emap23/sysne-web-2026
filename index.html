@@ -234,17 +234,19 @@
                     </div>
                     <div class="mapa-container">
   <style>
-    .mapa-container {
-      width: 100%;
-      max-width: 1500px;
-      margin: 0 auto;
-      position: relative;
-    }
+   .mapa-container {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  position: relative;
+  padding: 54px; /* evita que se pegue en móvil */
+}
 
-    .mapa-container svg {
-      width: 100%;
-      height: auto;
-    }
+.mapa-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 
     .estado {
       fill: rgba(255,255,255,0.08);
@@ -429,133 +431,187 @@
      title="Zacatecas"
      id="MX-ZAC" />
 </svg>
-
-</div>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  const estados = document.querySelectorAll("#mapa-mexico path");
+  const estados = document.querySelectorAll("svg path");
 
-  // Estados con PROTECCIÓN COMPLETA → azul (según imagen de cobertura)
-  const conCobertura = new Set([
-    "MX-BCN",                           // Baja California
-    "MX-CHH",                           // Chihuahua
-    "MX-COA",                           // Coahuila
-    "MX-NLE", "MX-NEL",                 // Nuevo León
-    "MX-TAM",                           // Tamaulipas
-    "MX-SLP",                           // San Luis Potosí
-    "MX-JAL",                           // Jalisco
-    "MX-COL",                           // Colima
-    "MX-GUA",                           // Guanajuato
-    "MX-QUE",                           // Querétaro
-    "MX-HID",                           // Hidalgo
-    "MX-MEX",                           // Estado de México
-    "MX-CMX",                           // Ciudad de México
-    "MX-MOR",                           // Morelos
-    "MX-PUE",                           // Puebla
-    "MX-TLA",                           // Tlaxcala
-    "MX-VER",                           // Veracruz
-    "MX-OAX",                           // Oaxaca
-    "MX-GRO",                           // Guerrero
-    "MX-CHP",                           // Chiapas
-    "MX-TAB",                           // Tabasco
-    "MX-ROO",                           // Quintana Roo
-    "MX-YUC",                           // Yucatán
-    "MX-MIC"                            // Michoacán
-  ]);
+const cobertura = {
+  // Norte
+  "MX-BCN": "completo",   // Baja California
+  "MX-TAM": "completo",   // Tamaulipas
+
+  // Centro / Occidente
+  "MX-JAL": "completo",
+  "MX-GUA": "completo",
+  "MX-QUE": "completo",
+  "MX-HID": "completo",
+  "MX-MEX": "completo",
+  "MX-CMX": "completo",
+  "MX-MOR": "completo",
+  "MX-PUE": "completo",
+
+  // Sur / Sureste
+  "MX-VER": "completo",
+  "MX-OAX": "completo",
+  "MX-CHP": "completo",
+  "MX-TAB": "completo",
+  "MX-CAM": "completo",
+  "MX-YUC": "completo",
+  "MX-ROO": "completo"
+};
 
   const nombresEstados = {
-    "MX-AGU":"Aguascalientes","MX-BCN":"Baja California",
-    "MX-BCS":"Baja California Sur","MX-CAM":"Campeche",
-    "MX-CHP":"Chiapas","MX-CHH":"Chihuahua","MX-COA":"Coahuila",
-    "MX-COL":"Colima","MX-CMX":"Ciudad de México","MX-DUR":"Durango",
-    "MX-GUA":"Guanajuato","MX-GRO":"Guerrero","MX-HID":"Hidalgo",
-    "MX-JAL":"Jalisco","MX-MEX":"Estado de México","MX-MIC":"Michoacán",
-    "MX-MOR":"Morelos","MX-NAY":"Nayarit","MX-NLE":"Nuevo León",
-    "MX-OAX":"Oaxaca","MX-PUE":"Puebla","MX-QUE":"Querétaro",
-    "MX-ROO":"Quintana Roo","MX-SLP":"San Luis Potosí","MX-SIN":"Sinaloa",
-    "MX-SON":"Sonora","MX-TAB":"Tabasco","MX-TAM":"Tamaulipas",
-    "MX-TLA":"Tlaxcala","MX-VER":"Veracruz","MX-YUC":"Yucatán",
-    "MX-ZAC":"Zacatecas","MX-NEL":"Nuevo León"
+    "MX-AGU": "Aguascalientes",
+    "MX-JAL": "Jalisco",
+    "MX-SON": "Sonora",
+    "MX-CHH": "Chihuahua",
+    "MX-CMX": "Ciudad de México",
+    "MX-OAX": "Oaxaca"
   };
 
-  const AZUL   = "#0ea5e9";
-  const GRIS   = "#828C9B";
+  const colores = {
+    completo: "#22c55e",
+    intermedio: "#facc15",
+    sin: "#ef4444"
+  };
 
-  // 1) Todos grises al inicio
-  estados.forEach(e => {
-    e.style.fill = GRIS;
-    e.style.transition = "fill 0.6s ease, opacity 0.3s ease";
-    e.style.opacity = "0.85";
-  });
-
-  // 2) Flash de escaneo azul
-  setTimeout(() => {
-    estados.forEach(e => {
-      e.style.fill = AZUL;
-      e.style.filter = "drop-shadow(0 0 10px #0ea5e9)";
-    });
-  }, 400);
-
-  // 3) Volver a gris
-  setTimeout(() => {
-    estados.forEach(e => {
-      e.style.fill = GRIS;
-      e.style.filter = "none";
-    });
-  }, 1100);
-
-  // 4) Aplicar colores finales
-  setTimeout(() => {
-    estados.forEach(e => {
-      const id = e.id;
-      if (!id) return;
-      e.style.fill = conCobertura.has(id) ? AZUL : GRIS;
-      e.style.opacity = "0.9";
-    });
-  }, 1700);
-
-  // Tooltip
+  // Crear tooltip dinámico
   const tooltip = document.createElement("div");
   tooltip.className = "tooltip";
-  tooltip.style.cssText = "position:fixed;background:#0a1a2b;color:white;padding:10px 14px;border-radius:8px;font-size:13px;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.4);border-left:3px solid #0ea5e9;";
   document.body.appendChild(tooltip);
 
-  estados.forEach(e => {
-    const id = e.id;
+  estados.forEach(estado => {
+
+    const id = estado.id;
     if (!id) return;
-    const nombre = nombresEstados[id] || e.getAttribute("title") || id;
-    const tieneCobertura = conCobertura.has(id);
 
-    e.style.cursor = "pointer";
+    const nivel = cobertura[id] || "sin";
+    const color = colores[nivel];
+    const nombre = nombresEstados[id] || estado.getAttribute("title") || id;
 
-    e.addEventListener("mouseenter", function () {
-      e.style.opacity = "1";
-      e.style.filter = tieneCobertura
-        ? "drop-shadow(0 0 8px rgba(14,165,233,0.7))"
-        : "drop-shadow(0 0 4px rgba(130,140,155,0.5))";
-      tooltip.innerHTML = \`
-        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">\${nombre}</div>
-        <div style="color:\${tieneCobertura ? AZUL : '#aab'};font-weight:600;font-size:12px;">
-          \${tieneCobertura ? "✓ Protección completa" : "⊘ Sin presencia"}
-        </div>\`;
-      tooltip.style.opacity = "1";
+    // Aplicar estilos base
+    estado.style.fill = color;
+    estado.style.opacity = "0.6";
+    estado.style.cursor = "pointer";
+    estado.style.transition = "all 0.3s ease";
+
+    // Hover
+    estado.addEventListener("mouseenter", function () {
+      estado.style.opacity = "1";
+
+      tooltip.innerHTML = `
+        <div class="tooltip-estado">${nombre}</div>
+        <div style="color:${color}; font-weight:600;">
+          ${
+            nivel === "completo" ? "✓ Protección completa" :
+            nivel === "intermedio" ? "◐ Cobertura intermedia" :
+            "⊘ Sin presencia"
+          }
+        </div>
+      `;
+
+      tooltip.classList.add("visible");
     });
 
-    e.addEventListener("mousemove", function (ev) {
-      tooltip.style.left = (ev.clientX + 16) + "px";
-      tooltip.style.top  = (ev.clientY - 45) + "px";
+    estado.addEventListener("mousemove", function (e) {
+      tooltip.style.left = (e.pageX + 15) + "px";
+      tooltip.style.top = (e.pageY - 40) + "px";
     });
 
-    e.addEventListener("mouseleave", function () {
-      e.style.opacity = "0.9";
-      e.style.filter = "none";
-      tooltip.style.opacity = "0";
+    estado.addEventListener("mouseleave", function () {
+      estado.style.opacity = "0.6";
+      tooltip.classList.remove("visible");
     });
+
   });
 
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const estados = document.querySelectorAll("svg path");
+
+const cobertura = {
+  // Norte
+  "MX-BCN": "completo",   // Baja California
+  "MX-TAM": "completo",   // Tamaulipas
+
+  // Centro / Occidente
+  "MX-JAL": "completo",
+  "MX-GUA": "completo",
+  "MX-QUE": "completo",
+  "MX-HID": "completo",
+  "MX-MEX": "completo",
+  "MX-CMX": "completo",
+  "MX-MOR": "completo",
+  "MX-PUE": "completo",
+
+  // Sur / Sureste
+  "MX-VER": "completo",
+  "MX-OAX": "completo",
+  "MX-CHP": "completo",
+  "MX-TAB": "completo",
+  "MX-CAM": "completo",
+  "MX-YUC": "completo",
+  "MX-ROO": "completo"
+};
+
+  const coloresFinales = {
+    completo: "#0ea5e9",  // azul fuerte
+    media: "#5fa8d3",     // azul claro
+    sin: "#C1C6CD"        // gris oscuro
+  };
+
+  // 1️⃣ Estado inicial gris
+  estados.forEach(estado => {
+    estado.style.fill = "#828C9B";
+    estado.style.transition = "all 0.6s ease";
+  });
+
+  // 2️⃣ Parpadeo azul tipo escaneo
+  setTimeout(() => {
+
+    estados.forEach(estado => {
+      estado.style.fill = "#0ea5e9";
+      estado.style.filter = "drop-shadow(0 0 12px #0ea5e9)";
+    });
+
+  }, 500);
+
+  // 3️⃣ Regresar a gris
+  setTimeout(() => {
+
+    estados.forEach(estado => {
+      estado.style.fill = "#D5D8DD";
+      estado.style.filter = "none";
+    });
+
+  }, 1200);
+
+  // 4️⃣ Aplicar colores finales según cobertura
+  setTimeout(() => {
+
+    estados.forEach(estado => {
+
+      const id = estado.id;
+      if (!id) return;
+
+      const nivel = cobertura[id] || "sin";
+      const color = coloresFinales[nivel];
+
+      estado.style.fill = color;
+      estado.style.opacity = "0.9";
+
+    });
+
+  }, 1800);
+
+});
+</script>
+</div>
+
                 </div>
             </div>
             <div class="stats-footer">
