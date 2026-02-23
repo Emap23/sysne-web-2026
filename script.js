@@ -956,17 +956,17 @@ function cargarVista(id) {
                         <p>${data.descripcion}</p>
                     </div>
                 </section>
-                <section class="scp-banner">
-                    <div class="scp-contenido">
-                        <div class="scp-texto">
-                            <h1>${data.titulo}</h1>
-                            <p>${data.detalle1}${data.detalle2 ? '<br><br>' + data.detalle2 : ''}</p>
-                        </div>
-                        <div class="scp-imagen">
-                            <img src="${data.circulo}" alt="${data.titulo}">
-                        </div>
-                    </div>
-                </section>
+                <section class="scp-banner ${id === 'scp' ? 'es-scp' : 'es-modulo'}">
+    <div class="scp-contenido">
+        <div class="scp-texto">
+            <h1>${data.titulo}</h1>
+            <p>${data.detalle1}${data.detalle2 ? '<br><br>' + data.detalle2 : ''}</p>
+        </div>
+        <div class="${id === 'scp' ? 'scp-imagen' : 'img-circular'}">
+            <img src="${data.circulo}" alt="${data.titulo}">
+        </div>
+    </div>
+</section>
                 <section class="ventajas-section">
                     <h2>Ventajas Estratégicas</h2>
                     <div class="ventajas-grid">
@@ -1003,35 +1003,32 @@ function cargarVista(id) {
 // =====================================================
 // 9. CATÁLOGO EQUIPOS DE PROTECCIÓN
 // =====================================================
+// Función para cargar la vista de equipos de protección SIN títulos innecesarios
 function cargarVistaEquiposProteccion() {
     const htmlContent = `
         <section class="perfiles-section-custom">
-            <div class="perfiles-header">
-                <p class="hero-sub" style="color:var(--celeste);text-align:center;font-weight:bold;">EQUIPAMIENTO PROFESIONAL</p>
-                <h2 class="perfiles-titulo-main">Equipo de Protección Especializado</h2>
-            </div>
-            <div class="perfiles-grid-custom" style="display:flex;justify-content:center;gap:16px;flex-wrap:nowrap;padding:0 20px;margin-bottom:60px;">
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('policias')" style="min-width:160px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(30,64,175,0.08),rgba(30,64,175,0.04));border:1.5px solid rgba(30,64,175,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
+            <div class="perfiles-grid-custom" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));justify-content:center;gap:12px;padding:0 20px;margin-bottom:60px;">
+                <div class="perfil-card-item" onclick="cargarMenuPerfil('policias')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(30,64,175,0.08),rgba(30,64,175,0.04));border:1.5px solid rgba(30,64,175,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
                     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(30,64,175,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
                     <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#1e40af,#1e3a8a);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(30,64,175,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-user-shield"></i></div>
                     <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">POLICÍAS</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('ambulancia')" style="min-width:160px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(22,163,74,0.08),rgba(22,163,74,0.04));border:1.5px solid rgba(22,163,74,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
+                <div class="perfil-card-item" onclick="cargarMenuPerfil('ambulancia')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(22,163,74,0.08),rgba(22,163,74,0.04));border:1.5px solid rgba(22,163,74,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
                     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(22,163,74,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
                     <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#16a34a,#15803d);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(22,163,74,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-ambulance"></i></div>
                     <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">AMBULANCIA</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('bomberos')" style="min-width:160px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(220,38,38,0.08),rgba(220,38,38,0.04));border:1.5px solid rgba(220,38,38,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
+                <div class="perfil-card-item" onclick="cargarMenuPerfil('bomberos')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(220,38,38,0.08),rgba(220,38,38,0.04));border:1.5px solid rgba(220,38,38,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
                     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(220,38,38,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
                     <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(220,38,38,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-fire-extinguisher"></i></div>
                     <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">BOMBEROS</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('forenses')" style="min-width:160px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.04));border:1.5px solid rgba(139,92,246,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
+                <div class="perfil-card-item" onclick="cargarMenuPerfil('forenses')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.04));border:1.5px solid rgba(139,92,246,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
                     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
                     <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(139,92,246,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-microscope"></i></div>
                     <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">FORENSES</h3>
                 </div>
-                <div class="perfil-card-item" onclick="cargarMenuPerfil('drogas')" style="min-width:160px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(234,88,12,0.08),rgba(234,88,12,0.04));border:1.5px solid rgba(234,88,12,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
+                <div class="perfil-card-item" onclick="cargarMenuPerfil('drogas')" style="min-width:140px;padding:24px 16px;flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-radius:14px;background:linear-gradient(135deg,rgba(234,88,12,0.08),rgba(234,88,12,0.04));border:1.5px solid rgba(234,88,12,0.2);transition:all 0.3s ease;position:relative;overflow:hidden;">
                     <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(234,88,12,0.1),transparent);pointer-events:none;opacity:0;transition:opacity 0.3s ease;" class="perfil-bg"></div>
                     <div class="perfil-icon-box" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#ea580c,#c2410c);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(234,88,12,0.3);font-size:1.8rem;color:#fff;transition:all 0.3s ease;position:relative;z-index:1;"><i class="fa-solid fa-biohazard"></i></div>
                     <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:#0f172a;text-align:center;position:relative;z-index:1;line-height:1.3;">DROGAS</h3>
@@ -1040,7 +1037,7 @@ function cargarVistaEquiposProteccion() {
         </section>
         
         <!-- SECCIÓN PRODUCTOS DESTACADOS PARA ENTREGA INMEDIATA -->
-        <section class="productos-destacados-section" style="margin-top:8px;padding:0 20px;">
+        <section class="productos-destacados-section" style="padding:80px 20px 0;">
             <div class="productos-destacados-header" style="text-align:center;max-width:900px;margin:0 auto;margin-bottom:40px;">
                 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;flex-direction:column;">
                     <span style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#00d4ff,#0099cc);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 15px rgba(0,212,255,0.3);">
@@ -1065,7 +1062,6 @@ function cargarVistaEquiposProteccion() {
     mostrarDetalle(htmlContent);
     
     // Cargar productos destacados después de que el DOM esté completamente renderizado
-    // Usar un timing mayor para asegurar que GSAP y el DOM están listos
     setTimeout(() => {
         cargarProductosDestacados();
     }, 300);
