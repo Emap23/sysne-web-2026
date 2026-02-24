@@ -150,12 +150,10 @@ try {
 })();
 
 // =====================================================
-// 5. ANIMACIONES DE ENTRADA — IntersectionObserver nativo
-//    Reemplaza GSAP ScrollTrigger para el scroll principal
-//    Mucho más liviano y sin bloquear el hilo principal
+// 5. ANIMACIONES DE SCROLL — IntersectionObserver
 // =====================================================
 function initPageAnimations() {
-    // Scroll → header scrolled (throttled)
+    // Header scroll
     let ticking = false;
     window.addEventListener('scroll', () => {
         if (!ticking) {
@@ -168,39 +166,52 @@ function initPageAnimations() {
         }
     }, { passive: true });
 
-    // Animaciones de entrada vía CSS + IntersectionObserver
-    // (no requiere GSAP ni ScrollTrigger)
-    const targets = document.querySelectorAll(
-        '.card, .stat-item, .ventaja-card, .tactico-card, ' +
-        '.hero-principal .hero-sub, .hero-principal h1, ' +
-        '.stats-footer h3, .stats-btn'
-    );
+    // Registrar todos los elementos reveal
+    initRevealObserver(document);
+}
 
+function initRevealObserver(root) {
     const io = new IntersectionObserver((entries) => {
         entries.forEach(e => {
             if (e.isIntersecting) {
-                e.target.classList.add('anim-in');
-                io.unobserve(e.target); // solo una vez
+                e.target.classList.add('revealed');
+                io.unobserve(e.target);
             }
         });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.06, rootMargin: '0px 0px -20px 0px' });
 
-    targets.forEach(el => {
-        el.classList.add('anim-ready');
+    // Clases CSS reveal
+    root.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom').forEach(el => {
         io.observe(el);
     });
 
-    // Hero entra directo (visible de inicio)
-    requestAnimationFrame(() => {
-        document.querySelectorAll('.hero-principal .hero-sub, .hero-principal h1')
-            .forEach(el => { el.classList.add('anim-in'); io.unobserve(el); });
-    });
+    // data-anim legacy (compatibilidad con HTML existente)
+    const io3 = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                const delay = parseFloat(e.target.dataset.delay || 0) * 1000;
+                setTimeout(() => e.target.classList.add('visible'), delay);
+                io3.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.06 });
+    root.querySelectorAll('[data-anim]').forEach(el => io3.observe(el));
+
+    // anim-ready para compat
+    const io2 = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('anim-in'); io2.unobserve(e.target); }
+        });
+    }, { threshold: 0.1 });
+    root.querySelectorAll('.anim-ready').forEach(el => io2.observe(el));
 }
 
 // =====================================================
 // 6. ANIMACIONES VISTAS DINÁMICAS (GSAP ligero)
 // =====================================================
 function animarVistaDetalle() {
+    // Reveal scroll para la vista detalle
+    requestAnimationFrame(() => initRevealObserver(document.getElementById('vista-detalle') || document));
     if (typeof gsap === 'undefined') return;
     gsap.fromTo('.modulo-hero-content',
         { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
@@ -342,128 +353,128 @@ const imagenesProductos = {
     ]
   ],
 
-  // ── BOMBEROS — Imágenes Unsplash profesionales ──
+  // ── BOMBEROS — Imágenes temáticas correctas ──
   bomberos: [
-    // [0] Protección térmica
+    // [0] Protección térmica — trajes bombero
     [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-      'https://images.unsplash.com/photo-1611690074952-0fdad4e9f5a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
-      'https://images.unsplash.com/photo-1523357585207-be8f07d71591?w=600&q=80',
-      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80'
+      'https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&q=80',
+      'https://images.unsplash.com/photo-1601581974732-bd5c4b4b8c07?w=600&q=80',
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
+      'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=600&q=80',
+      'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&q=80',
+      'https://images.unsplash.com/photo-1517495306984-f84210f9daa8?w=600&q=80'
     ],
-    // [1] Herramientas de corte hidráulico
+    // [1] Herramientas de rescate hidráulico — jaws of life
     [
       'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80',
+      'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80',
       'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=600&q=80',
-      'https://images.unsplash.com/photo-1461897104016-0b3b00cc81ee?w=600&q=80',
-      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80'
+      'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=600&q=80',
+      'https://images.unsplash.com/photo-1614961233913-a5113a4a34ed?w=600&q=80',
+      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80'
     ],
-    // [2] Extintores
+    // [2] Extintores — fire extinguisher
     [
-      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
       'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
-      'https://images.unsplash.com/photo-1523357585207-be8f07d71591?w=600&q=80',
-      'https://images.unsplash.com/photo-1611690074952-0fdad4e9f5a6?w=600&q=80',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80'
+      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
+      'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&q=80',
+      'https://images.unsplash.com/photo-1548678886-c8e5a8ea82bd?w=600&q=80',
+      'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80',
+      'https://images.unsplash.com/photo-1586953208270-d5b3b5984d68?w=600&q=80'
     ],
-    // [3] Equipos respiración SCBA
+    // [3] Respiración SCBA — self contained breathing apparatus
     [
       'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
-      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
-      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
-      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
+      'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=80',
       'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
+      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
+      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
       'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80'
     ],
-    // [4] Detección de gases
+    // [4] Detección de gases — gas detector industrial
     [
       'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
+      'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=600&q=80',
       'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
       'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
-      'https://images.unsplash.com/photo-1523357585207-be8f07d71591?w=600&q=80'
+      'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&q=80',
+      'https://images.unsplash.com/photo-1523289333742-be1143f6b766?w=600&q=80'
     ]
   ],
 
-  // ── FORENSES — Imágenes Unsplash de laboratorio/ciencia ──
+  // ── FORENSES — Imágenes laboratorio forense real ──
   forenses: [
     // [0] Recolección de evidencia biológica
     [
-      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
-      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
+      'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=600&q=80',
       'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
-      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
+      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
       'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80'
     ],
-    // [1] Luces forenses ALS/UV
+    // [1] Luces forenses ALS/UV — laboratorio con luz UV
     [
-      'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80',
-      'https://images.unsplash.com/photo-1557324232-b8917d3c3dcb?w=600&q=80',
-      'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80',
       'https://images.unsplash.com/photo-1554080353-a576cf803bda?w=600&q=80',
-      'https://images.unsplash.com/photo-1602524205651-870c6e44286f?w=600&q=80',
-      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80'
+      'https://images.unsplash.com/photo-1523289333742-be1143f6b766?w=600&q=80',
+      'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80',
+      'https://images.unsplash.com/photo-1605289982774-9a6fef564df8?w=600&q=80',
+      'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600&q=80',
+      'https://images.unsplash.com/photo-1527685609591-44b0aef2400b?w=600&q=80'
     ],
-    // [2] Equipo de laboratorio
+    // [2] Equipo laboratorio — microscopio, probetas
     [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
+      'https://images.unsplash.com/photo-1581093803997-759b4dddc0ac?w=600&q=80',
       'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
-      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
-      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
-      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80',
-      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80'
+      'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80'
     ],
-    // [3] Equipo de protección forense
+    // [3] Equipo de protección forense — overol, guantes
     [
       'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+      'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=80',
       'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
-      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
       'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
       'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
       'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80'
     ]
   ],
 
-  // ── DROGAS — Imágenes Unsplash de análisis/laboratorio ──
+  // ── DROGAS — Imágenes análisis de sustancias real ──
   drogas: [
-    // [0] Kits de prueba de campo
+    // [0] Kits de prueba de campo — test tubes, vials
     [
+      'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=600&q=80',
+      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
       'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
       'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80',
-      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80',
-      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80',
+      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
       'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80'
     ],
-    // [1] Espectrómetros y análisis avanzado
+    // [1] Espectrómetros — mass spectrometry lab
     [
-      'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
+      'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=600&q=80',
+      'https://images.unsplash.com/photo-1581093803997-759b4dddc0ac?w=600&q=80',
       'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80',
-      'https://images.unsplash.com/photo-1557324232-b8917d3c3dcb?w=600&q=80',
-      'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80',
-      'https://images.unsplash.com/photo-1602524205651-870c6e44286f?w=600&q=80',
-      'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80'
-    ],
-    // [2] Detección de portadores y rayos X
-    [
-      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
-      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
       'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
-      'https://images.unsplash.com/photo-1563889362049-d4bf59f6cc7d?w=600&q=80',
-      'https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=600&q=80',
-      'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80'
+      'https://images.unsplash.com/photo-1557324232-b8917d3c3dcb?w=600&q=80'
     ],
-    // [3] Protección respiratoria
+    // [2] Rayos X y escáner — security scanner
+    [
+      'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?w=600&q=80',
+      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
+      'https://images.unsplash.com/photo-1523289333742-be1143f6b766?w=600&q=80',
+      'https://images.unsplash.com/photo-1605289982774-9a6fef564df8?w=600&q=80',
+      'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=600&q=80',
+      'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80'
+    ],
+    // [3] Protección respiratoria — gas mask, respirator
     [
       'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
-      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
+      'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=80',
       'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
       'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
       'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
@@ -1176,10 +1187,13 @@ function cargarVista(id) {
     const contenedor = document.getElementById('contenido-dinamico');
     let data = datosVistas[id] || datosVistas['scp'];
 
-    gsap.to(inicio, {
-        opacity: 0, duration: 0.3, ease: "power1.out",
-        onComplete: () => {
+    // Transición robusta sin depender de GSAP
+    inicio.style.transition = 'opacity 0.28s ease';
+    inicio.style.opacity = '0';
+    setTimeout(() => {
             inicio.style.display = 'none';
+            inicio.style.opacity = '1';
+            inicio.style.transition = '';
             detalle.style.display = 'block';
             vistaActual = 'detalle';
 
@@ -1230,11 +1244,15 @@ function cargarVista(id) {
                 </section>
                 ${obtenerHtmlForm('Cotizar ' + data.titulo)}`;
 
-            gsap.to(detalle, { opacity: 1, duration: 0.4 });
+            detalle.style.opacity = '0';
+            requestAnimationFrame(() => {
+                detalle.style.transition = 'opacity 0.3s ease';
+                detalle.style.opacity = '1';
+                setTimeout(() => { detalle.style.transition = ''; }, 320);
+            });
             window.scrollTo({ top: 0, behavior: "instant" });
             setTimeout(animarVistaDetalle, 60);
-        }
-    });
+    }, 290);
 }
 
 // =====================================================

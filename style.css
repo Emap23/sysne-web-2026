@@ -309,6 +309,17 @@ body.cursor-none * { cursor: none !important; }
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.6s ease;
+    /* display:none se aplica via JS después de la transición */
+}
+
+/* Fallback: si JS falla, ocultar preloader después de 8s via animation */
+@keyframes autoHidePreloader {
+    0%,87%   { opacity: 1; visibility: visible; }
+    88%      { opacity: 0; }
+    100%     { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+#sysne-preloader {
+    animation: autoHidePreloader 8s ease forwards;
 }
 
 /* =====================================================
@@ -510,54 +521,186 @@ header.scrolled {
 .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* =====================================================
-   DROPDOWN
+   MEGA DROPDOWN
 ===================================================== */
 .dropdown { position: relative; }
 
+/* ── Legacy dropdown-menu (mobile fallback) ── */
 .dropdown-menu {
     position: absolute;
     top: 100%;
     left: 0;
     background: white;
-    min-width: 250px;
+    min-width: 220px;
     display: none;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     border-top: 3px solid var(--celeste);
     list-style: none;
-    padding-left: 0;
+    padding: 0;
     margin: 0;
     animation: dropIn 0.2s ease;
+    z-index: 999;
+}
+.dropdown-menu li { list-style: none; }
+.dropdown-menu li a {
+    color: #333; padding: 10px 20px; display: block;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s ease, padding-left 0.2s ease;
+}
+.dropdown-menu li a:hover { background: rgba(95,168,211,0.12); padding-left: 26px; }
+
+/* ── Mega panel ── */
+.mega-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 620px;
+    background: #06101e;
+    border: 1px solid rgba(0,212,255,0.18);
+    border-top: 3px solid var(--celeste);
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0,212,255,0.06);
+    z-index: 9999;
+    overflow: hidden;
+    animation: megaDrop 0.22s cubic-bezier(0.16,1,0.3,1) both;
 }
 
+@keyframes megaDrop {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.97); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.mega-dropdown:hover .mega-panel { display: flex; }
+
+/* ── Mobile: disable mega, use dropdown-menu ── */
+@media (max-width: 900px) {
+    .mega-dropdown:hover .mega-panel { display: none; }
+    .mega-dropdown .dropdown-menu { display: none; }
+    .mega-dropdown.open .dropdown-menu { display: block; }
+}
+
+.mega-visual {
+    width: 200px;
+    min-width: 200px;
+    background: linear-gradient(160deg, #0a1a2b 0%, #040d18 100%);
+    border-right: 1px solid rgba(0,212,255,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px 20px;
+    gap: 10px;
+}
+
+.mega-svg {
+    width: 160px;
+    height: 130px;
+    overflow: visible;
+}
+
+.mega-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #00d4ff;
+    text-align: center;
+}
+.mega-sublabel {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+.mega-links {
+    flex: 1;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    max-height: 380px;
+}
+
+.mega-section-title {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    color: var(--celeste);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0,212,255,0.12);
+}
+
+.mega-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.18s ease, transform 0.18s ease;
+    cursor: pointer;
+}
+.mega-item:hover {
+    background: rgba(0,212,255,0.07);
+    transform: translateX(4px);
+}
+.mega-item i {
+    font-size: 15px;
+    color: var(--celeste);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.mega-item strong {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.2;
+}
+.mega-item small {
+    display: block;
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.38);
+    margin-top: 1px;
+}
+
+/* ── Mega SVG animations ── */
 @keyframes dropIn {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
-.dropdown:hover .dropdown-menu { display: block; }
-
-.dropdown-menu li { list-style: none; }
-
-.menu-highlight {
-    padding: 10px 20px;
-    background: var(--azul-oscuro);
-    color: var(--celeste);
-    font-weight: 800;
-    font-size: 10px;
+@keyframes megaFloat {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+}
+@keyframes megaPulse {
+    0%,100% { opacity: 0.3; }
+    50%      { opacity: 0.6; }
+}
+@keyframes megaBlink {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.2; }
+}
+@keyframes spinCW  { to { transform: rotate(360deg); } }
+@keyframes spinCCW { to { transform: rotate(-360deg); } }
+@keyframes megaScan {
+    0%   { transform: translateY(0); opacity: 0.8; }
+    100% { transform: translateY(-22px); opacity: 0; }
 }
 
-.dropdown-menu li a {
-    color: #333;
-    padding: 10px 20px;
-    display: block;
-    border-bottom: 1px solid #eee;
-    transition: background 0.25s ease, padding-left 0.25s ease;
-}
-
-.dropdown-menu li a:hover {
-    background: rgba(95, 168, 211, 0.12);
-    padding-left: 26px;
-}
+.mega-float { animation: megaFloat 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.mega-pulse { animation: megaPulse 2.5s ease-in-out infinite; }
+.mega-blink { animation: megaBlink 1.4s ease-in-out infinite; }
+.spin-cw    { animation: spinCW  1.5s linear infinite; transform-box: fill-box; transform-origin: center; }
+.spin-ccw   { animation: spinCCW 1.5s linear infinite; transform-box: fill-box; transform-origin: center; }
+.mega-scan  { animation: megaScan 1.8s ease-in-out infinite; }
 
 /* =====================================================
    ANIMACIONES DE ENTRADA GLOBALES
@@ -1864,3 +2007,143 @@ footer {
     .footer-right h4  { font-size: 14px; }
     .contact-item     { justify-content: center; font-size: 13px; }
 }
+
+/* =====================================================
+   ANIMACIONES DE SCROLL MASIVAS
+===================================================== */
+
+/* Reveal desde abajo */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.revealed { opacity: 1; transform: translateY(0); }
+
+/* Reveal desde izquierda */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal-left.revealed { opacity: 1; transform: translateX(0); }
+
+/* Reveal desde derecha */
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal-right.revealed { opacity: 1; transform: translateX(0); }
+
+/* Zoom in */
+.reveal-zoom {
+    opacity: 0;
+    transform: scale(0.88);
+    transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal-zoom.revealed { opacity: 1; transform: scale(1); }
+
+/* Stagger delays */
+.delay-1 { transition-delay: 0.08s; }
+.delay-2 { transition-delay: 0.16s; }
+.delay-3 { transition-delay: 0.24s; }
+.delay-4 { transition-delay: 0.32s; }
+.delay-5 { transition-delay: 0.40s; }
+.delay-6 { transition-delay: 0.48s; }
+.delay-7 { transition-delay: 0.56s; }
+
+/* ── Card hover elevado ── */
+.card {
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease !important;
+}
+.card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.18) !important;
+}
+
+/* ── Tactico card hover ── */
+.tactico-card {
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease !important;
+    overflow: hidden;
+}
+.tactico-card:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+}
+.tactico-card:hover img {
+    transform: scale(1.06) !important;
+}
+
+/* ── Ventaja card hover ── */
+.ventaja-card {
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+.ventaja-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(0,212,255,0.12);
+    border-color: var(--celeste) !important;
+}
+
+/* ── Stat item counter ── */
+.stat-item {
+    transition: transform 0.3s ease;
+}
+.stat-item:hover { transform: scale(1.04); }
+
+/* ── Estrella item hover ── */
+.estrella-item {
+    transition: transform 0.28s ease, background 0.28s ease;
+}
+.estrella-item:hover {
+    transform: translateY(-4px);
+    background: rgba(0,212,255,0.08) !important;
+}
+
+/* ── Hero parallax text ── */
+.hero-content {
+    transition: transform 0.1s linear;
+}
+
+/* ── Barra de progreso animada ── */
+.skill-bar-fill {
+    animation: skillFill 1.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes skillFill {
+    from { width: 0 !important; }
+}
+
+/* ── Cursor dron mejorado ── */
+#cursor-wrap {
+    transition: none !important; /* sin lag */
+}
+
+#custom-cursor.hover polygon,
+#custom-cursor.hover rect {
+    filter: drop-shadow(0 0 6px #00d4ff);
+}
+#custom-cursor.hover {
+    filter: drop-shadow(0 0 10px rgba(0,212,255,0.6));
+}
+
+/* ── Línea divisora animada ── */
+.animated-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--celeste), transparent);
+    background-size: 200% 100%;
+    animation: lineMove 3s ease-in-out infinite;
+}
+@keyframes lineMove {
+    0%   { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ── Número counter glow ── */
+.stat-item h2 {
+    text-shadow: 0 0 30px rgba(0,212,255,0.3);
+}
+
+/* ── Mega panel scroll fix ── */
+.mega-links::-webkit-scrollbar { width: 4px; }
+.mega-links::-webkit-scrollbar-track { background: transparent; }
+.mega-links::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
