@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 @keyframes cursorRingSpin { to { transform: rotate(360deg); } }
 @keyframes cursorBlink { 0%,100%{opacity:0.9} 50%{opacity:0.2} }
@@ -395,48 +395,75 @@
     <main id="vista-inicio">
 
         <section class="hero-principal" data-anim="hero">
-            <div class="hero-content" data-anim="hero-content">
-                <p class="hero-sub" data-anim="fade-up" data-delay="0.2">SYSNE</p>
-                <h1 data-anim="fade-up" data-delay="0.4">Aliados en el combate <br>de la delincuencia</h1>
-            </div>
-        </section>
+    
+    <!-- VIDEO DE FONDO -->
+    <video class="hero-video" autoplay muted loop playsinline>
+        <source src="videos/Menu.mp4" type="video/mp4">
+        Tu navegador no soporta video HTML5.
+    </video>
 
-        <section class="cards-section">
-            <div class="cards-container">
-                <div class="card reveal-zoom" onclick="cargarVista('scp')" data-anim="card" data-delay="0">
-                    <div class="card-img">
-                        <span class="card-badge"><i class="fa-solid fa-star"></i></span>
-                        <img src="img/IMAGENES/Sistema de Control Policial/scp Bk.webp" alt="SCP">
-                    </div>
-                    <div class="card-text">
-                        <h3>Plataforma SCP</h3>
-                        <p>La plataforma proporciona herramientas automatizadas para las áreas 
-                            de inteligencia policial y gestión de alertas, aportando valor a la eficiencia operativa de los cuerpos de 
-                            seguridad pública.</p>
-                    </div>
-                </div>
-                <div class="card reveal-zoom" onclick="cargarVistaEquiposProteccion()" data-anim="card" data-delay="0.12">
-                    <div class="card-img">
-                        <span class="card-badge"><i class="fa-solid fa-shield-halved"></i></span>
-                        <img src="img/equi/apaisada_equipotactico.webp" alt="Protección">
-                    </div>
-                    <div class="card-text">
-                        <h3>Equipos de protección</h3>
-                        <p>Equipamiento especializado que considera seguridad, análisis y capacidades de inteligencia que permite investigar con seguridad, precisión científica y respaldo jurídico.</p>
-                    </div>
-                </div>
-                <div class="card reveal-zoom" onclick="cargarVista('lpr_sol')" data-anim="card" data-delay="0.24">
-                    <div class="card-img">
-                        <span class="card-badge"><i class="fa-solid fa-car"></i></span>
-                        <img src="img/placas.jpeg" alt="LPR">
-                    </div>
-                    <div class="card-text">
-                        <h3>Sistema LPR</h3>
-                        <p>Solución tecnológica que identifica y registra automáticamente las placas vehiculares mediante cámaras especializadas y software de reconocimiento óptico.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- CONTENIDO -->
+    <div class="hero-content" data-anim="hero-content">
+        <p class="hero-sub" data-anim="fade-up" data-delay="0.2">SYSNE</p>
+        <h1 data-anim="fade-up" data-delay="0.4">
+            Aliados en el combate <br>de la delincuencia
+        </h1>
+    </div>
+</section>
+
+        <section class="cards-section-modern">
+  <div class="card-modern">
+
+    <!-- IMAGEN -->
+    <div class="card-modern-image">
+      <img id="cardImage"
+        src="img/IMAGENES/Sistema de Control Policial/scp Bk.webp"
+        alt="Vista SCP">
+    </div>
+
+    <!-- TEXTO -->
+    <div class="card-modern-content">
+
+      <h2>Soluciones Tecnológicas</h2>
+
+      <div class="card-option active"
+ onclick="changeCard(
+   'img/IMAGENES/Sistema de Control Policial/scp Bk.webp',
+   this
+ )">
+        <i class="fa-solid fa-star"></i>
+        <div>
+          <h3>Plataforma SCP</h3>
+          <p>Herramientas automatizadas para inteligencia policial y gestión de alertas.</p>
+        </div>
+      </div>
+
+      <div class="card-option"
+ onclick="changeCard(
+   'img/equi/apaisada_equipotactico.webp',
+   this
+ )">
+        <i class="fa-solid fa-shield-halved"></i>
+        <div>
+          <h3>Equipos de protección</h3>
+          <p>Equipamiento especializado con respaldo científico y jurídico.</p>
+        </div>
+      </div>
+<div class="card-option"
+ onclick="changeCard(
+   'img/placas.jpeg',
+   this
+ )">
+        <i class="fa-solid fa-car"></i>
+        <div>
+          <h3>Sistema LPR</h3>
+          <p>Identificación automática de placas vehiculares.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
         <section class="stats-video-section">
             <video autoplay muted loop playsinline class="bg-video">
@@ -470,19 +497,6 @@
                     </div>
                     <div class="mapa-container">
  <style>
-   .mapa-container {
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
-  position: relative;
-  padding: 54px; /* evita que se pegue en móvil */
-}
-
-.mapa-container svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
 
     .estado {
       fill: rgba(255,255,255,0.08);
@@ -521,7 +535,7 @@
       opacity: 0;
       transition: opacity 0.2s ease;
       z-index: 999;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.805);
     }
 
     .tooltip.visible {
@@ -847,7 +861,6 @@ const cobertura = {
 });
 </script>
 </div>
-
                 </div>
             </div>
             <div class="stats-footer">
@@ -858,7 +871,76 @@ const cobertura = {
             </div>
         </section>
 
-        <div id="contenedor-formulario-inicio"></div>
+        <section class="contacto-seccion">
+
+  <div class="contacto-card">
+
+    <!-- FORMULARIO -->
+    <div class="contacto-form">
+      <h2>Envíanos un mensaje</h2>
+      <p>Déjanos tus datos y nos pondremos en contacto contigo.</p>
+
+      <form id="contact-form">
+
+  <div class="form-grid">
+    <input 
+      type="text" 
+      name="nombre"
+      placeholder="Nombre completo"
+      required
+    >
+
+    <input 
+      type="email" 
+      name="correo"
+      placeholder="Correo electrónico"
+      required
+    >
+  </div>
+
+  <input 
+    type="tel" 
+    name="telefono"
+    placeholder="Teléfono"
+    required
+  >
+
+  <!-- 🔽 SECTOR -->
+  <select name="sector" required>
+    <option value="" disabled selected>Sector</option>
+    <option value="Gobierno">Gobierno</option>
+    <option value="Educación">Educación</option>
+    <option value="Salud">Salud</option>
+    <option value="Empresarial">Empresarial</option>
+    <option value="Tecnología">Tecnología</option>
+    <option value="Otro">Otro</option>
+  </select>
+
+  <textarea 
+    name="mensaje"
+    placeholder="¿Cómo podemos ayudarte?"
+    required
+  ></textarea>
+
+  <button type="submit" class="btn-submit">
+    Enviar mensaje →
+  </button>
+
+</form>
+    </div>
+
+    <!-- MAPA -->
+    <div class="contacto-mapa">
+      <iframe
+  src="https://www.google.com/maps?q=19%C2%B001'06.2%22N%2098%C2%B015'58.7%22W&z=17&output=embed"
+  loading="lazy"
+  referrerpolicy="no-referrer-when-downgrade">
+</iframe>
+    </div>
+
+  </div>
+
+</section>
     </main>
 
     <!-- ══════════════════════════════════════════
@@ -893,6 +975,25 @@ const cobertura = {
     </footer>
 
     <!-- Scripts -->
+    <script>
+function changeCard(imageSrc, element) {
+
+  // Cambiar imagen con fade
+  const img = document.getElementById('cardImage');
+  img.style.opacity = 0;
+
+  setTimeout(() => {
+    img.src = imageSrc;
+    img.style.opacity = 1;
+  }, 200);
+
+  // Estado activo
+  document.querySelectorAll('.card-option')
+    .forEach(op => op.classList.remove('active'));
+
+  element.classList.add('active');
+}
+</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>

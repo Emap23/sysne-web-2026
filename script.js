@@ -113,11 +113,14 @@ try {
     const links = document.getElementById('nav-links');
     if (!btn || !links) return;
 
-    btn.addEventListener('click', () => {
-        btn.classList.toggle('open');
-        links.classList.toggle('open');
-    });
-
+    btn.addEventListener('click', (e) => {
+    e.stopPropagation(); // 🔑 CLAVE
+    btn.classList.toggle('open');
+    links.classList.toggle('open');
+});
+links.addEventListener('click', e => {
+    e.stopPropagation();
+});
     // Dropdowns en móvil con click (en desktop los maneja CSS :hover)
     document.querySelectorAll('.dropdown > a').forEach(a => {
         a.addEventListener('click', e => {
@@ -1198,24 +1201,38 @@ function cargarVista(id) {
             vistaActual = 'detalle';
 
             contenedor.innerHTML = `
-                <section class="modulo-hero" style="background-image:url('${data.banner}')">
-                    <div class="modulo-overlay"></div>
-                    <div class="modulo-hero-content">
-                        <h1>${data.titulo}</h1>
-                        <p>${data.descripcion}</p>
-                    </div>
-                </section>
-                <section class="scp-banner ${id === 'scp' ? 'es-scp' : 'es-modulo'}">
-                    <div class="scp-contenido">
-                        <div class="scp-texto">
-                            <h1>${data.titulo}</h1>
-                            <p>${data.detalle1}${data.detalle2 ? '<br><br>' + data.detalle2 : ''}</p>
-                        </div>
-                        <div class="${id === 'scp' ? 'scp-imagen' : 'img-circular'}">
-                            <img src="${data.circulo}" alt="${data.titulo}">
-                        </div>
-                    </div>
-                </section>
+            <section class="modulo-hero-modern" style="background-image:url('${data.banner}')">
+    <div class="hero-overlay"></div>
+    <div class="hero-content-modern">
+
+        <div class="hero-subtitle">
+            <span class="dot"></span>
+            ${data.descripcion}
+        </div>
+
+        <div class="hero-bracket-title">
+            <h1>${data.titulo}</h1>
+        </div>
+
+    </div>
+</section>
+               <section class="scp-banner ${id === 'scp' ? 'es-scp' : 'es-modulo'}">
+    <div class="scp-modern-container">
+
+        <div class="scp-modern-img">
+            <img src="${data.circulo}" alt="${data.titulo}">
+        </div>
+
+        <div class="scp-modern-text">
+            <h2>${data.titulo}</h2>
+            <p>
+                ${data.detalle1}
+                ${data.detalle2 ? '<br><br>' + data.detalle2 : ''}
+            </p>
+        </div>
+
+    </div>
+</section>
                 <section class="ventajas-section">
                     <h2>Ventajas Estratégicas</h2>
                     <div class="ventajas-grid">
