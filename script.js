@@ -1094,31 +1094,56 @@ function initStatsAnimation() {
 // =====================================================
 // 11. FORMULARIO
 // =====================================================
-const obtenerHtmlForm = (tituloPersonalizado) => `
-    <section class="project-form-section" id="contacto">
-        <div class="blue-container">
-            <div class="form-header">
-                <h2>${tituloPersonalizado || '¿Tienes un proyecto?<br>Hablemos →'}</h2>
-                <p><i class="fa-solid fa-phone"></i> 222 970 39 85</p>
-                <p><i class="fa-solid fa-envelope"></i> contacto@sysne.com.mx</p>
-            </div>
-            <form class="form-body" id="contact-form">
-                <div class="form-fields">
-                    <input type="text"  name="nombre"   placeholder="Nombre"  required>
-                    <input type="email" name="correo"   placeholder="Correo"  required>
-                    <input type="text"  name="telefono" placeholder="Teléfono" required>
-                    <select name="sector" required>
-                        <option value="" disabled selected>Sector...</option>
-                        <option value="Gobierno">Gobierno</option>
-                        <option value="Privado">Privado</option>
-                        <option value="Otros">Otros</option>
-                    </select>
-                    <textarea name="mensaje" placeholder="Mensaje" rows="4" required></textarea>
-                    <button type="submit" class="btn-submit">Enviar solicitud</button>
-                </div>
-            </form>
+function obtenerHtmlForm(titulo = 'Envíanos un mensaje') {
+  return `
+<section class="contacto-seccion">
+  <div class="contacto-card">
+
+    <!-- FORMULARIO -->
+    <div class="contacto-form">
+      <h2>${titulo}</h2>
+      <p>Déjanos tus datos y nos pondremos en contacto contigo.</p>
+
+      <form id="contact-form">
+
+        <div class="form-grid">
+          <input type="text" name="nombre" placeholder="Nombre completo" required>
+          <input type="email" name="correo" placeholder="Correo electrónico" required>
         </div>
-    </section>`;
+
+        <input type="tel" name="telefono" placeholder="Teléfono" required>
+
+        <select name="sector" required>
+          <option value="" disabled selected>Sector</option>
+          <option value="Gobierno">Gobierno</option>
+          <option value="Educación">Educación</option>
+          <option value="Salud">Salud</option>
+          <option value="Empresarial">Empresarial</option>
+          <option value="Tecnología">Tecnología</option>
+          <option value="Otro">Otro</option>
+        </select>
+
+        <textarea name="mensaje" placeholder="¿Cómo podemos ayudarte?" required></textarea>
+
+        <button type="submit" class="btn-submit">
+          Enviar mensaje →
+        </button>
+
+      </form>
+    </div>
+
+    <!-- MAPA -->
+    <div class="contacto-mapa">
+      <iframe
+        src="https://www.google.com/maps?q=19%C2%B001'06.2%22N%2098%C2%B015'58.7%22W&z=17&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+
+  </div>
+</section>`;
+}
 
 // =====================================================
 // 12. SISTEMA DE VISTAS — CON ANIMACIONES GSAP
