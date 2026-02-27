@@ -3809,3 +3809,71 @@ footer {
     from { opacity: 0; }
     to   { opacity: 1; }
 }
+/* =====================================================
+   FIX MEGA MENÚ DESKTOP — eliminar gap que rompe hover
+   Se mueve top a 100% y se compensa con padding interno
+===================================================== */
+@media (min-width: 901px) {
+    .mega-panel {
+        top: 100% !important;
+        padding-top: 8px;
+    }
+}
+
+/* =====================================================
+   RESPONSIVE — secciones sin cobertura mobile
+===================================================== */
+
+/* Footer */
+@media (max-width: 768px) {
+    footer { padding: 40px 5%; }
+    .footer-container { flex-direction: column; align-items: center; gap: 28px; text-align: center; }
+    .footer-left { transform: none; }
+    .footer-right { text-align: center; padding-right: 0; }
+    .footer-right .contact-item { justify-content: center; }
+    .social-icons { justify-content: center; }
+}
+
+/* SCP Banner */
+@media (max-width: 900px) {
+    .scp-banner { padding: 50px 5%; }
+    .scp-modern-container { flex-direction: column; gap: 32px; text-align: center; }
+    .scp-modern-img { justify-content: center; overflow: hidden; }
+    .scp-modern-img img { width: 90%; max-width: 100%; margin-bottom: 0 !important; }
+}
+
+/* Stats footer CTA */
+@media (max-width: 768px) {
+    .stats-footer { flex-direction: column; gap: 20px; text-align: center; padding: 28px 5%; }
+    .stats-footer h3 { font-size: 20px; max-width: 100%; }
+}
+
+/* Stats layout */
+@media (max-width: 768px) {
+    .stats-layout { grid-template-columns: 1fr; gap: 32px; }
+    .stats-grid { margin-left: 0; justify-items: center; }
+    .stats-title-visible { text-align: center; }
+}
+
+/* Prod content dual */
+@media (max-width: 900px) {
+    .prod-content-dual { grid-template-columns: 1fr; padding: 50px 5%; gap: 36px; }
+}
+
+/* Proteccion wrapper sidebar */
+@media (max-width: 900px) {
+    .proteccion-wrapper { flex-direction: column; }
+    .sidebar-perfil { width: 100%; min-width: unset; height: auto; position: static; padding: 20px 16px; }
+    .sidebar-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .sidebar-nav li { border-bottom: none; flex: 1 1 auto; min-width: 100px; justify-content: center; padding: 10px 8px; font-size: 12px; }
+    .visor-variantes { padding: 28px 4%; }
+}
+
+/* background-attachment fixed rompe en iOS Safari */
+@media (max-width: 768px) {
+    .franja-final { background-attachment: scroll; }
+}
+
+/* Evitar overflow horizontal global */
+body { overflow-x: hidden; }
+img, video { max-width: 100%; }
