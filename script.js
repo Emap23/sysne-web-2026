@@ -113,14 +113,11 @@ try {
     const links = document.getElementById('nav-links');
     if (!btn || !links) return;
 
-    btn.addEventListener('click', (e) => {
-    e.stopPropagation(); // 🔑 CLAVE
-    btn.classList.toggle('open');
-    links.classList.toggle('open');
-});
-links.addEventListener('click', e => {
-    e.stopPropagation();
-});
+    btn.addEventListener('click', () => {
+        btn.classList.toggle('open');
+        links.classList.toggle('open');
+    });
+
     // Dropdowns en móvil con click (en desktop los maneja CSS :hover)
     document.querySelectorAll('.dropdown > a').forEach(a => {
         a.addEventListener('click', e => {
@@ -281,21 +278,21 @@ const imagenesProductos = {
     ],
     // [4] Cascos
     [
-      'img/Pro/imgpoli/cascos/cascos_1.png',
-      'img/Pro/imgpoli/cascos/cascos_2.png',
-      'img/Pro/imgpoli/cascos/cascos_3.png',
-      'img/Pro/imgpoli/cascos/cascos_4.png',
-      'img/Pro/imgpoli/cascos/cascos_5.png',
-      'img/Pro/imgpoli/cascos/cascos_6.png',
-    ],
-    // [5] Chalecos tácticos
-    [
       'img/Pro/imgpoli/chalecos/chalecos_1.png',
       'img/Pro/imgpoli/chalecos/chalecos_2.png',
       'img/Pro/imgpoli/chalecos/chalecos_3.png',
       'img/Pro/imgpoli/chalecos/chalecos_4..png',
       'img/Pro/imgpoli/chalecos/chalecos_5.png',
       'img/Pro/imgpoli/chalecos/chalecos_6.png',
+    ],
+    // [5] Chalecos tácticos
+    [
+      'img/Pro/imgpoli/cascos/cascos_1.png',
+      'img/Pro/imgpoli/cascos/cascos_2.png',
+      'img/Pro/imgpoli/cascos/cascos_3.png',
+      'img/Pro/imgpoli/cascos/cascos_4.png',
+      'img/Pro/imgpoli/cascos/cascos_5.png',
+      'img/Pro/imgpoli/cascos/cascos_6.png',
     ],
   ],
 
@@ -347,62 +344,62 @@ const imagenesProductos = {
     ],
     // [5] Higiene y protección — Unsplash profesional
     [
-      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
-      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
-      'https://images.unsplash.com/photo-1606206873764-fd15e242fdde?w=600&q=80',
-      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80',
-      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
-      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80'
-    ]
+      'img/Pro/img ambulancias/higiene y proteccion/higiene_1.png',
+      'img/Pro/img ambulancias/higiene y proteccion/higiene_2.png',
+      'img/Pro/img ambulancias/higiene y proteccion/higiene_3.png',
+      'img/Pro/img ambulancias/higiene y proteccion/higiene_4.png',
+      'img/Pro/img ambulancias/higiene y proteccion/higiene_5.png',
+      'img/Pro/img ambulancias/higiene y proteccion/higiene_6.png'
+    ],
   ],
 
   // ── BOMBEROS — Imágenes temáticas correctas ──
   bomberos: [
     // [0] Protección térmica — trajes bombero
     [
-      'https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&q=80',
-      'https://images.unsplash.com/photo-1601581974732-bd5c4b4b8c07?w=600&q=80',
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
-      'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=600&q=80',
-      'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&q=80',
-      'https://images.unsplash.com/photo-1517495306984-f84210f9daa8?w=600&q=80'
+      'img/Pro/imgbom/Proteccion Termica/bombero_1.png',
+      'img/Pro/imgbom/Proteccion Termica/bombero_2.png',
+      'img/Pro/imgbom/Proteccion Termica/bombero_3.png',
+      'img/Pro/imgbom/Proteccion Termica/bombero_4.png',
+      'img/Pro/imgbom/Proteccion Termica/bombero_5.png',
+      'img/Pro/imgbom/Proteccion Termica/bombero_6.png'
     ],
     // [1] Herramientas de rescate hidráulico — jaws of life
-    [
-      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80',
-      'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80',
-      'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=600&q=80',
-      'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=600&q=80',
-      'https://images.unsplash.com/photo-1614961233913-a5113a4a34ed?w=600&q=80',
-      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80'
+     [
+      'img/Pro/imgbom/Herramientas de Corte/corte_1.png',
+      'img/Pro/imgbom/Herramientas de Corte/corte_2.png',
+      'img/Pro/imgbom/Herramientas de Corte/corte_3.png',
+      'img/Pro/imgbom/Herramientas de Corte/corte_4.png',
+      'img/Pro/imgbom/Herramientas de Corte/corte_5.png',
+      'img/Pro/imgbom/Herramientas de Corte/corte_6.png'
     ],
     // [2] Extintores — fire extinguisher
     [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
-      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
-      'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&q=80',
-      'https://images.unsplash.com/photo-1548678886-c8e5a8ea82bd?w=600&q=80',
-      'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80',
-      'https://images.unsplash.com/photo-1586953208270-d5b3b5984d68?w=600&q=80'
+      'img/Pro/imgbom/Extintores/extintor_1.png',
+      'img/Pro/imgbom/Extintores/extintor_2.png',
+      'img/Pro/imgbom/Extintores/extintor_3.png',
+      'img/Pro/imgbom/Extintores/extintor_4.png',
+      'img/Pro/imgbom/Extintores/extintor_5.png',
+      'img/Pro/imgbom/Extintores/extintor_6.png'
     ],
     // [3] Respiración SCBA — self contained breathing apparatus
     [
-      'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
-      'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&q=80',
-      'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80',
-      'https://images.unsplash.com/photo-1578496481449-cf2e845cc00c?w=600&q=80',
-      'https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600&q=80',
-      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80'
+      'img/Pro/imgbom/Respiración SCBA/scba_1.png',
+      'img/Pro/imgbom/Respiración SCBA/scba_2.png',
+      'img/Pro/imgbom/Respiración SCBA/scba_3.png',
+      'img/Pro/imgbom/Respiración SCBA/scba_4.png',
+      'img/Pro/imgbom/Respiración SCBA/scba_5.png',
+      'img/Pro/imgbom/Respiración SCBA/scba_6.png'
     ],
     // [4] Detección de gases — gas detector industrial
-    [
-      'https://images.unsplash.com/photo-1511174511562-5f7f18b874f8?w=600&q=80',
-      'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=600&q=80',
-      'https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=600&q=80',
-      'https://images.unsplash.com/photo-1562516155-e0c1ee44059b?w=600&q=80',
-      'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&q=80',
-      'https://images.unsplash.com/photo-1523289333742-be1143f6b766?w=600&q=80'
-    ]
+   [
+      'img/Pro/imgbom/Detección de Gases/gas_1.png',
+      'img/Pro/imgbom/Detección de Gases/gas_2.png',
+      'img/Pro/imgbom/Detección de Gases/gas_3.png',
+      'img/Pro/imgbom/Detección de Gases/gas_4.png',
+      'img/Pro/imgbom/Detección de Gases/gas_5.png',
+      'img/Pro/imgbom/Detección de Gases/gas_6.png'
+    ],
   ],
 
   // ── FORENSES — Imágenes laboratorio forense real ──
@@ -1094,56 +1091,31 @@ function initStatsAnimation() {
 // =====================================================
 // 11. FORMULARIO
 // =====================================================
-function obtenerHtmlForm(titulo = 'Envíanos un mensaje') {
-  return `
-<section class="contacto-seccion">
-  <div class="contacto-card">
-
-    <!-- FORMULARIO -->
-    <div class="contacto-form">
-      <h2>${titulo}</h2>
-      <p>Déjanos tus datos y nos pondremos en contacto contigo.</p>
-
-      <form id="contact-form">
-
-        <div class="form-grid">
-          <input type="text" name="nombre" placeholder="Nombre completo" required>
-          <input type="email" name="correo" placeholder="Correo electrónico" required>
+const obtenerHtmlForm = (tituloPersonalizado) => `
+    <section class="project-form-section" id="contacto">
+        <div class="blue-container">
+            <div class="form-header">
+                <h2>${tituloPersonalizado || '¿Tienes un proyecto?<br>Hablemos →'}</h2>
+                <p><i class="fa-solid fa-phone"></i> 222 970 39 85</p>
+                <p><i class="fa-solid fa-envelope"></i> contacto@sysne.com.mx</p>
+            </div>
+            <form class="form-body" id="contact-form">
+                <div class="form-fields">
+                    <input type="text"  name="nombre"   placeholder="Nombre"  required>
+                    <input type="email" name="correo"   placeholder="Correo"  required>
+                    <input type="text"  name="telefono" placeholder="Teléfono" required>
+                    <select name="sector" required>
+                        <option value="" disabled selected>Sector...</option>
+                        <option value="Gobierno">Gobierno</option>
+                        <option value="Privado">Privado</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                    <textarea name="mensaje" placeholder="Mensaje" rows="4" required></textarea>
+                    <button type="submit" class="btn-submit">Enviar solicitud</button>
+                </div>
+            </form>
         </div>
-
-        <input type="tel" name="telefono" placeholder="Teléfono" required>
-
-        <select name="sector" required>
-          <option value="" disabled selected>Sector</option>
-          <option value="Gobierno">Gobierno</option>
-          <option value="Educación">Educación</option>
-          <option value="Salud">Salud</option>
-          <option value="Empresarial">Empresarial</option>
-          <option value="Tecnología">Tecnología</option>
-          <option value="Otro">Otro</option>
-        </select>
-
-        <textarea name="mensaje" placeholder="¿Cómo podemos ayudarte?" required></textarea>
-
-        <button type="submit" class="btn-submit">
-          Enviar mensaje →
-        </button>
-
-      </form>
-    </div>
-
-    <!-- MAPA -->
-    <div class="contacto-mapa">
-      <iframe
-        src="https://www.google.com/maps?q=19%C2%B001'06.2%22N%2098%C2%B015'58.7%22W&z=17&output=embed"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade">
-      </iframe>
-    </div>
-
-  </div>
-</section>`;
-}
+    </section>`;
 
 // =====================================================
 // 12. SISTEMA DE VISTAS — CON ANIMACIONES GSAP
@@ -1226,38 +1198,24 @@ function cargarVista(id) {
             vistaActual = 'detalle';
 
             contenedor.innerHTML = `
-            <section class="modulo-hero-modern" style="background-image:url('${data.banner}')">
-    <div class="hero-overlay"></div>
-    <div class="hero-content-modern">
-
-        <div class="hero-subtitle">
-            <span class="dot"></span>
-            ${data.descripcion}
-        </div>
-
-        <div class="hero-bracket-title">
-            <h1>${data.titulo}</h1>
-        </div>
-
-    </div>
-</section>
-               <section class="scp-banner ${id === 'scp' ? 'es-scp' : 'es-modulo'}">
-    <div class="scp-modern-container">
-
-        <div class="scp-modern-img">
-            <img src="${data.circulo}" alt="${data.titulo}">
-        </div>
-
-        <div class="scp-modern-text">
-            <h2>${data.titulo}</h2>
-            <p>
-                ${data.detalle1}
-                ${data.detalle2 ? '<br><br>' + data.detalle2 : ''}
-            </p>
-        </div>
-
-    </div>
-</section>
+                <section class="modulo-hero" style="background-image:url('${data.banner}')">
+                    <div class="modulo-overlay"></div>
+                    <div class="modulo-hero-content">
+                        <h1>${data.titulo}</h1>
+                        <p>${data.descripcion}</p>
+                    </div>
+                </section>
+                <section class="scp-banner ${id === 'scp' ? 'es-scp' : 'es-modulo'}">
+                    <div class="scp-contenido">
+                        <div class="scp-texto">
+                            <h1>${data.titulo}</h1>
+                            <p>${data.detalle1}${data.detalle2 ? '<br><br>' + data.detalle2 : ''}</p>
+                        </div>
+                        <div class="${id === 'scp' ? 'scp-imagen' : 'img-circular'}">
+                            <img src="${data.circulo}" alt="${data.titulo}">
+                        </div>
+                    </div>
+                </section>
                 <section class="ventajas-section">
                     <h2>Ventajas Estratégicas</h2>
                     <div class="ventajas-grid">
