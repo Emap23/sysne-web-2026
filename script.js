@@ -1,11 +1,5 @@
 // =====================================================
 // SYSNE — script.js MEJORADO
-// + Preloader cinematográfico
-// + Cursor mira 3D con detección de fondo
-// + Animaciones de entrada con GSAP ScrollTrigger
-// + Menú responsive hamburger
-// + Imágenes reales en bomberos/forenses/drogas
-// =====================================================
 
 // =====================================================
 // GSAP PLUGINS (Lenis eliminado - causa lag)
@@ -57,9 +51,7 @@ try {
 
 // =====================================================
 // 3. CURSOR MIRA 3D — DIRECTO (sin lerp, sin rAF loop)
-//    Posición via CSS custom properties → el navegador
-//    lo pinta en el compositor sin bloquear el hilo JS
-// =====================================================
+//  =====================================================
 (function initCursor() {
     const wrap    = document.getElementById('cursor-wrap');
     const svg     = document.getElementById('custom-cursor');
@@ -105,107 +97,118 @@ try {
     });
 })();
 
-// =====================================================
-// 4. MENÚ HAMBURGER RESPONSIVE
-// =====================================================
-(function initHamburger() {
-    const btn   = document.getElementById('nav-hamburger');
-    const links = document.getElementById('nav-links');
-    if (!btn || !links) return;
+/* =====================================================
+   NAVEGACIÓN RESPONSIVE (VERSIÓN ESTABLE Y LIMPIA)
+===================================================== */
+document.addEventListener('DOMContentLoaded', () => {
 
-    btn.addEventListener('click', () => {
-        btn.classList.toggle('open');
-        links.classList.toggle('open');
+  const hamburger = document.querySelector('.nav-hamburger');
+  const navLinks  = document.querySelector('.nav-links');
+  const dropdowns = document.querySelectorAll('.dropdown');
+  const navbar    = document.querySelector('.navbar');
+
+  /* ─────────────────────────────────────────────
+     FUNCIÓN CENTRAL PARA CERRAR TODO
+  ───────────────────────────────────────────── */
+  function cerrarMenu() {
+    hamburger?.classList.remove('open');
+    navLinks?.classList.remove('open');
+    dropdowns.forEach(d => d.classList.remove('open'));
+  }
+
+  /* ─────────────────────────────────────────────
+     HAMBURGER MENU
+  ───────────────────────────────────────────── */
+  hamburger?.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    hamburger.classList.toggle('open');
+    navLinks.classList.toggle('open');
+
+    // Cerrar dropdowns al abrir/cerrar
+    dropdowns.forEach(d => d.classList.remove('open'));
+  });
+
+  /* ─────────────────────────────────────────────
+     DROPDOWNS (SOLO MÓVIL)
+  ───────────────────────────────────────────── */
+  dropdowns.forEach(dropdown => {
+    const trigger = dropdown.querySelector('a');
+
+    if (!trigger) return;
+
+    trigger.addEventListener('click', e => {
+      if (window.innerWidth > 900) return;
+
+      e.preventDefault();
+
+      // Cerrar otros dropdowns
+      dropdowns.forEach(d => {
+        if (d !== dropdown) d.classList.remove('open');
+      });
+
+      // Toggle actual
+      dropdown.classList.toggle('open');
     });
+  });
 
-    // Dropdowns en móvil con click (en desktop los maneja CSS :hover)
-    document.querySelectorAll('.dropdown > a').forEach(a => {
-        a.addEventListener('click', e => {
-            if (window.innerWidth <= 900) {
-                e.preventDefault();
-                e.stopPropagation();
-                const parent = a.parentElement;
-                const isOpen = parent.classList.contains('open');
-                document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
-                if (!isOpen) parent.classList.add('open');
-            }
-        });
-    });
+  /* ─────────────────────────────────────────────
+     LINKS INTERNOS → CERRAR Y NAVEGAR
+  ───────────────────────────────────────────── */
+  document.querySelectorAll('.dropdown-menu a, .mega-item').forEach(link => {
+    link.addEventListener('click', e => {
+      if (window.innerWidth <= 900) {
+        const href = link.getAttribute('href');
+        cerrarMenu();
 
-    // Cerrar al hacer click fuera
-    document.addEventListener('click', e => {
-        if (!links.contains(e.target) && !btn.contains(e.target)) {
-            links.classList.remove('open');
-            btn.classList.remove('open');
+        if (href && href !== '#' && href !== 'javascript:void(0)') {
+          window.location.href = href;
         }
+      }
     });
+  });
 
-    // Cerrar al navegar
-    links.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', () => {
-            links.classList.remove('open');
-            btn.classList.remove('open');
-        });
-    });
-})();
+  /* ─────────────────────────────────────────────
+     CLICK FUERA → CERRAR TODO
+  ───────────────────────────────────────────── */
+  document.addEventListener('click', e => {
+    if (window.innerWidth <= 900) {
+      if (!e.target.closest('.navbar')) {
+        cerrarMenu();
+      }
+    }
+  });
 
-// =====================================================
-// 5. ANIMACIONES DE SCROLL — IntersectionObserver
-// =====================================================
-function initPageAnimations() {
-    // Header scroll
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-        if (!ticking) {
-            requestAnimationFrame(() => {
-                const h = document.getElementById('main-header');
-                if (h) h.classList.toggle('scrolled', window.scrollY > 50);
-                ticking = false;
-            });
-            ticking = true;
-        }
-    }, { passive: true });
+  /* ─────────────────────────────────────────────
+     RESIZE → LIMPIAR ESTADOS
+  ───────────────────────────────────────────── */
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) {
+      cerrarMenu();
+    }
+  });
 
-    // Registrar todos los elementos reveal
-    initRevealObserver(document);
+});
+
+/* =====================================================
+   SCROLL HEADER
+===================================================== */
+const header = document.querySelector('header');
+
+window.addEventListener('scroll', function() {
+  if (window.scrollY > 20) {
+    header?.classList.add('scrolled');
+  } else {
+    header?.classList.remove('scrolled');
+  }
+});
+
+function cerrarMenu() {
+  hamburger?.classList.remove('open');
+  navLinks?.classList.remove('open');
+  dropdowns.forEach(d => d.classList.remove('open'));
 }
-
-function initRevealObserver(root) {
-    const io = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (e.isIntersecting) {
-                e.target.classList.add('revealed');
-                io.unobserve(e.target);
-            }
-        });
-    }, { threshold: 0.06, rootMargin: '0px 0px -20px 0px' });
-
-    // Clases CSS reveal
-    root.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom').forEach(el => {
-        io.observe(el);
-    });
-
-    // data-anim legacy (compatibilidad con HTML existente)
-    const io3 = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (e.isIntersecting) {
-                const delay = parseFloat(e.target.dataset.delay || 0) * 1000;
-                setTimeout(() => e.target.classList.add('visible'), delay);
-                io3.unobserve(e.target);
-            }
-        });
-    }, { threshold: 0.06 });
-    root.querySelectorAll('[data-anim]').forEach(el => io3.observe(el));
-
-    // anim-ready para compat
-    const io2 = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (e.isIntersecting) { e.target.classList.add('anim-in'); io2.unobserve(e.target); }
-        });
-    }, { threshold: 0.1 });
-    root.querySelectorAll('.anim-ready').forEach(el => io2.observe(el));
-}
-
 // =====================================================
 // 6. ANIMACIONES VISTAS DINÁMICAS (GSAP ligero)
 // =====================================================
@@ -482,6 +485,8 @@ const imagenesProductos = {
     ]
   ]
 };
+
+
 
 // =====================================================
 // 8. CATÁLOGO ESTRUCTURADO (igual que original)
@@ -786,20 +791,20 @@ const datosVistas = {
         descripcion: "Gestión operativa integral y seguimiento en tiempo real para fuerzas de seguridad.",
         detalle1: "Plataforma integral diseñada para modernizar la seguridad pública mediante la interconexión en tiempo real entre ciudadanos, policías y centros de mando. El sistema permite gestionar alertas de emergencia, coordinar patrullajes inteligentes y recopilar inteligencia de datos para prevenir el delito.",
         ventajas: [
-            { icono: "fa-mobile-screen-button", titulo: "Recuperación de la confianza ciudadana", texto: "Al contar con un botón de denuncia directa y registro digital de cada actuación policial, se eliminan las condiciones que permiten la corrupción." },
-            { icono: "fa-stopwatch", titulo: "Reducción en tiempos de respuesta", texto: "La conexión directa entre la aplicación ciudadana y el oficial más cercano permite que la ayuda llegue en minutos." },
-            { icono: "fa-shield-halved", titulo: "Protección total a los elementos policiales", texto: "El sistema cuida a quienes nos cuidan; mediante el botón de apoyo y el rastreo GPS, ningún agente queda solo en campo." },
+            { icono: "fa-mobile-screen-button", titulo: "Mejora la percepción de seguridad ciudadana", texto: "Al contar con un botón de denuncia directa y registro digital de cada actuación policial, se eliminan las condiciones que permiten la corrupción." },
+            { icono: "fa-stopwatch", titulo: "Reducción en tiempos de respuesta", texto: "La conexión directa entre la aplicación ciudadana y el oficial más cercano permite que la ayuda llegue con prontitud." },
+            { icono: "fa-shield-halved", titulo: "Protección total a los elementos policiales", texto: "El sistema protege no solo a los elementos policiales sino a las instituciones de seguridad; mediante el botón de apoyo y el rastreo GPS, ningún agente queda solo en campo." },
             { icono: "fa-diagram-project", titulo: "Prevención del delito basada en datos", texto: "El análisis inteligente de información permite identificar zonas de riesgo y patrones delictivos reales." }
         ],
         franjaImagen: "img/IMAGENES/Sistema de Control Policial/SCP logo H.png",
-        fraseFinal: "Con el SCP, las administraciones gubernamentales no solo vigilan, sino que gestionan la seguridad con inteligencia."
+        fraseFinal: "Con SCP, las instituciones de seguridad no solo vigilan, sino que gestionan la seguridad con inteligencia."
     },
     'infraccion': {
         banner: "img/IMAGENES/INFRACCION DIGITAL/apaisada_infraccion",
         circulo: "img/IMAGENES/INFRACCION DIGITAL/circular_infraccion.webp",
         titulo: "SCP Infracción Digital",
         descripcion: "Plataforma inteligente diseñada para modernizar la labor de los agentes de tránsito.",
-        detalle1: "Es una plataforma inteligente diseñada para modernizar la labor de los agentes de tránsito, permitiéndoles aplicar multas de forma digital desde sus dispositivos móviles.",
+        detalle1: "Es una plataforma inteligente diseñada para modernizar la labor de los agentes de tránsito, permitiéndoles aplicar multas de forma digital desde dispositivos móviles.",
         ventajas: [
             { icono: "fa-road",             titulo: "Calles más seguras para todos",       texto: "Al agilizar el trabajo de los agentes y detectar reincidentes al momento, se fomenta una cultura vial de respeto." },
             { icono: "fa-shield-halved",    titulo: "Cero corrupción y máxima confianza",  texto: "La digitalización elimina el manejo discrecional de boletas físicas, asegurando que cada proceso sea honesto." },
@@ -812,7 +817,7 @@ const datosVistas = {
         banner: "img/IMAGENES/POLICIA E INVESTIGACION/apaisada_policieeinv",
         circulo: "img/IMAGENES/POLICIA E INVESTIGACION/circular_policiaeinv.webp",
         titulo: "SCP Policía de Investigación",
-        descripcion: "Herramienta tecnológica avanzada para centralizar y organizar evidencias e investigaciones.",
+        descripcion: "Herramienta tecnológica avanzada para centralizar y organizar evidencias de investigaciones.",
         detalle1: "Es una herramienta tecnológica avanzada diseñada para centralizar y organizar todas las evidencias, documentos y hallazgos de una investigación en un solo lugar digital seguro.",
         ventajas: [
             { icono: "fa-scale-balanced", titulo: "Resultados reales contra la impunidad",  texto: "Al organizar mejor las pruebas y evidencias, se logran investigaciones más sólidas que terminan en sentencias justas." },
@@ -839,7 +844,7 @@ const datosVistas = {
     'cautelares': {
         banner: "img/IMAGENES/MEDIDAS CAUTELARES/apaisadacautelar.webp",
         circulo: "img/IMAGENES/MEDIDAS CAUTELARES/circulacautelares",
-        titulo: "SCP Medidas Cautelares y Brazaletes",
+        titulo: "SCP Medidas Cautelares",
         descripcion: "Solución tecnológica para monitorear en tiempo real a personas con medidas cautelares.",
         detalle1: "Es una solución tecnológica avanzada diseñada para monitorear en tiempo real a personas que, por mandato judicial, llevan su proceso legal en libertad.",
         ventajas: [
@@ -848,7 +853,7 @@ const datosVistas = {
             { icono: "fa-users",          titulo: "Reinserción social con vigilancia",           texto: "Fomenta que las personas mantengan sus vínculos familiares y laborales bajo supervisión estricta." },
             { icono: "fa-scale-balanced", titulo: "Justicia moderna y humanista",                texto: "Demuestra un gobierno a la vanguardia que utiliza la tecnología para aplicar la ley de forma inteligente." }
         ],
-        fraseFinal: "Con SCP Medidas Cautelares y Brazaletes, tu administración transforma la vigilancia en un proceso infalible."
+        fraseFinal: "Con SCP Medidas Cautelares, tu administración transforma la vigilancia en un proceso infalible."
     },
     'visitas': {
         banner: "img/IMAGENES/CONTROL DE VISITAS/apaisada_controldevisitas",
@@ -867,7 +872,7 @@ const datosVistas = {
     'lpr_sol': {
         banner: "img/IMAGENES/Plataforma de inteligencia LPR/apaisada_LPR.webp",
         circulo: "img/IMAGENES/Plataforma de inteligencia LPR/circular_lrp.webp",
-        titulo: "Plataforma de Inteligencia LPR",
+        titulo: "Plataforma LPR",
         descripcion: "Ecosistema tecnológico de seguridad perimetral con cámaras ANPR y antenas RFID.",
         detalle1: "Es un ecosistema tecnológico de seguridad perimetral que integra cámaras de lectura de placas (ANPR) y antenas de radiofrecuencia (RFID) para el blindaje de ciudades y carreteras.",
         ventajas: [
@@ -878,12 +883,12 @@ const datosVistas = {
         ],
         fraseFinal: "Con la Plataforma de Inteligencia LPR, tu administración construye una frontera tecnológica infranqueable."
     },
-    'ciberseguridad': {
+       'ciberseguridad': {
         banner: "img/ser/Ciber Seguridad BG.webp",
         circulo: "img/ser/Ciber Seguridad C.webp",
         titulo: "Servicios de Ciberseguridad",
         descripcion: "Blindaje digital integral para proteger la infraestructura tecnológica y la información gubernamental.",
-        detalle1: "Es un ecosistema de protección digital avanzada diseñado para blindar la infraestructura tecnológica del gobierno contra ataques cibernéticos y el robo de información.",
+        detalle1: "Un sistema de ciberseguridad que permite analizar incidentes, comprender los vectores de ataque y reforzar la defensa digital para salvaguardar la información estratégica del Estado.",
         ventajas: [
             { icono: "fa-user-shield",           titulo: "Protección de la identidad ciudadana",     texto: "Al asegurar las bases de datos gubernamentales, se evita el robo de información personal." },
             { icono: "fa-server",                titulo: "Continuidad de los servicios públicos",    texto: "La seguridad en redes y nube garantiza que los trámites digitales estén disponibles las 24 horas." },
@@ -897,7 +902,7 @@ const datosVistas = {
         circulo: "img/ser/Transcricion C.webp",
         titulo: "SCP Transcripción",
         descripcion: "Conversión inteligente de audio y video en texto estructurado para análisis y toma de decisiones.",
-        detalle1: "Es una solución de inteligencia artificial diseñada para convertir automáticamente audios y videos en texto estructurado, facilitando la búsqueda y el análisis de información clave.",
+        detalle1: "Es una solución diseñada para convertir automáticamente audios y videos en texto estructurado, facilitando la búsqueda y el análisis de información clara.",
         ventajas: [
             { icono: "fa-gavel",          titulo: "Justicia basada en evidencias sólidas",     texto: "Al contar con transcripciones precisas de entrevistas y comunicaciones, el gobierno fortalece los expedientes." },
             { icono: "fa-tower-broadcast",titulo: "Respuesta inmediata ante emergencias",      texto: "La capacidad de analizar en tiempo real las frecuencias de radio permite detectar palabras de alerta." },
@@ -925,7 +930,7 @@ const datosVistas = {
         circulo: "img/ser/Implementacion de tacticos C.webp",
         titulo: "Implementación de Tácticos",
         descripcion: "Tecnología de localización y rastreo en tiempo real para operativos de alta seguridad.",
-        detalle1: "Es una solución de despliegue estratégico diseñada para la localización y rastreo de dispositivos de comunicación en tiempo real.",
+        detalle1: "Este servicio esta diseñado para la implementación de equipos tácticos tanto en ambientes vehiculares y aeronaves.",
         ventajas: [
             { icono: "fa-life-ring",   titulo: "Salvamento de vidas en emergencias",     texto: "En desastres naturales o desapariciones, el gobierno cuenta con la capacidad de localizar personas." },
             { icono: "fa-crosshairs",  titulo: "Golpes precisos a la delincuencia",       texto: "Permite el rastreo de objetivos de alto perfil involucrados en actividades ilegales." },
@@ -939,7 +944,7 @@ const datosVistas = {
         circulo: "img/ser/Desarrollo de Sitema C.webp",
         titulo: "Desarrollo de Sistemas",
         descripcion: "Creación de plataformas digitales personalizadas que optimizan procesos y fortalecen la gestión.",
-        detalle1: "Es un servicio especializado en el diseño y creación de software a la medida, construido para resolver los retos específicos de cada institución.",
+        detalle1: "Es un servicio especializado en el diseño y creación de software específicos de las oficinas de seguridad para que los sistemas crezcan junto con las instituciones.",
         ventajas: [
             { icono: "fa-users",       titulo: "Servicios públicos a la medida del ciudadano", texto: "Al crear sistemas específicos para las necesidades del estado, el gobierno elimina trámites innecesarios." },
             { icono: "fa-piggy-bank",  titulo: "Ahorro y optimización del presupuesto",        texto: "El software a la medida evita el pago de licencias externas costosas." },
@@ -948,6 +953,7 @@ const datosVistas = {
         ],
         fraseFinal: "Con nuestro Desarrollo de Sistemas, tu gobierno deja de adaptarse a la tecnología."
     },
+    
     'forensia': {
         banner: "img/equi/Forencia Digital BG.webp",
         circulo: "img/equi/Forencia Digital C.webp",
@@ -979,7 +985,7 @@ const datosVistas = {
     'lpr_sistemas': {
         banner: "img/equi/Sistema LPR BG.webp",
         circulo: "img/equi/Sistema LPR C.webp",
-        titulo: "Sistemas LPR Hardware",
+        titulo: "Sistemas LPR ",
         descripcion: "Infraestructura tecnológica para lectura automática de placas y vigilancia vehicular en tiempo real.",
         detalle1: "Es la infraestructura física de alta precisión compuesta por cámaras de alta velocidad y sensores especializados para la lectura automática de placas (ANPR).",
         ventajas: [
@@ -988,7 +994,7 @@ const datosVistas = {
             { icono: "fa-border-all", titulo: "Control total de las fronteras",         texto: "La instalación en puntos estratégicos permite saber exactamente quién entra y sale." },
             { icono: "fa-city",       titulo: "Modernización y orden público",          texto: "Sustituir los retenes manuales por tecnología de lectura automática agiliza el tránsito." }
         ],
-        fraseFinal: "Con los Sistemas LPR Hardware, tu administración instala los ojos del estado en cada vía."
+        fraseFinal: "Con los Sistemas LPR, tu administración instala los ojos del estado en cada vía."
     },
     'areas': {
         banner: "img/equi/Plataforma AereaBG.webp",
@@ -1020,7 +1026,7 @@ const datosVistas = {
     },
     'moviles': {
         banner: "img/equi/Pm95 BK.webp",
-        circulo: "img/equi/PM95.png",
+        circulo: "img/equi/PM955.png",
         titulo: "Dispositivos Móviles",
         descripcion: "Herramienta móvil robusta para operación táctica y conexión en tiempo real.",
         detalle1: "Es la herramienta de mano definitiva para el personal operativo, diseñada para llevar toda la capacidad del centro de control directamente al lugar donde ocurren los hechos.",
@@ -1032,20 +1038,36 @@ const datosVistas = {
         ],
         fraseFinal: "Con dispositivos como el PM95, tu administración entrega a las corporaciones una herramienta de élite."
     },
-    'pmi': {
-        banner: "img/equi/PMI BG.webp",
-        circulo: "img/equi/PMI C.webp",
-        titulo: "PMI (Punto de Monitoreo Inteligente)",
-        descripcion: "Infraestructura urbana inteligente que integra videovigilancia, comunicación y sistemas de alerta ciudadana.",
-        detalle1: "Cámaras PTZ de alta definición con zoom óptico y botón de pánico con conexión directa al C5/C4.",
-        ventajas: [
-            { icono: "fa-video",        titulo: "Videovigilancia 360°",    texto: "Cobertura amplia con cámaras de alta resolución." },
-            { icono: "fa-bell",         titulo: "Botón de Pánico",         texto: "Comunicación inmediata con el centro de monitoreo." },
-            { icono: "fa-volume-high",  titulo: "Perifoneo Integrado",     texto: "Sistema de altavoces para alertas públicas." },
-            { icono: "fa-network-wired",titulo: "Conectividad Segura",     texto: "Enlaces por fibra óptica o microondas." }
-        ],
-        fraseFinal: "El PMI fortalece la seguridad urbana mediante monitoreo inteligente y respuesta inmediata."
-    }
+  'pmi': {
+    banner: "img/equi/PMI.png",
+    circulo: "img/equi/pmiC.png",
+    titulo: "PMI (Punto de Monitoreo Inteligente)",
+    descripcion: "Sistema integral de videovigilancia urbana instalado en municipios.",
+    detalle1: "Integra cámaras de vigilancia de alta definición, botón de pánico ciudadano y equipos de protección, enlazados directamente a los centros de control C5 o C4 para una respuesta inmediata.",
+    ventajas: [
+        { 
+            icono: "fa-video",
+            titulo: "Cámaras de Vigilancia",
+            texto: "Cámaras fijas y PTZ con visión diurna y nocturna para supervisión continua en cualquier municipio."
+        },
+        { 
+            icono: "fa-bell",
+            titulo: "Botón de Pánico",
+            texto: "Permite a la ciudadanía solicitar apoyo inmediato ante emergencias, enlazado al centro de monitoreo."
+        },
+        { 
+            icono: "fa-shield-halved",
+            titulo: "Equipos de Protección",
+            texto: "Infraestructura robusta con gabinetes, postes y sistemas antivandálicos para operación segura."
+        },
+        { 
+            icono: "fa-network-wired",
+            titulo: "Monitoreo Inteligente",
+            texto: "Transmisión de datos segura mediante fibra óptica, radio o microondas hacia el C5/C4."
+        }
+    ],
+    fraseFinal: "El PMI brinda vigilancia permanente y protección inteligente para fortalecer la seguridad en municipios."
+}
 };
 
 // =====================================================
@@ -1091,32 +1113,56 @@ function initStatsAnimation() {
 // =====================================================
 // 11. FORMULARIO
 // =====================================================
-const obtenerHtmlForm = (tituloPersonalizado) => `
-    <section class="project-form-section" id="contacto">
-        <div class="blue-container">
-            <div class="form-header">
-                <h2>${tituloPersonalizado || '¿Tienes un proyecto?<br>Hablemos →'}</h2>
-                <p><i class="fa-solid fa-phone"></i> 222 970 39 85</p>
-                <p><i class="fa-solid fa-envelope"></i> contacto@sysne.com.mx</p>
-            </div>
-            <form class="form-body" id="contact-form">
-                <div class="form-fields">
-                    <input type="text"  name="nombre"   placeholder="Nombre"  required>
-                    <input type="email" name="correo"   placeholder="Correo"  required>
-                    <input type="text"  name="telefono" placeholder="Teléfono" required>
-                    <select name="sector" required>
-                        <option value="" disabled selected>Sector...</option>
-                        <option value="Gobierno">Gobierno</option>
-                        <option value="Privado">Privado</option>
-                        <option value="Otros">Otros</option>
-                    </select>
-                    <textarea name="mensaje" placeholder="Mensaje" rows="4" required></textarea>
-                    <button type="submit" class="btn-submit">Enviar solicitud</button>
-                </div>
-            </form>
-        </div>
-    </section>`;
+function obtenerHtmlForm(titulo = 'Envíanos un mensaje') {
+  return `
+<section class="contacto-seccion">
+  <div class="contacto-card">
 
+    <!-- FORMULARIO -->
+    <div class="contacto-form">
+      <h2>${titulo}</h2>
+      <p>Déjanos tus datos y nos pondremos en contacto contigo.</p>
+
+      <form id="contact-form">
+
+        <div class="form-grid">
+          <input type="text" name="nombre" placeholder="Nombre completo" required>
+          <input type="email" name="correo" placeholder="Correo electrónico" required>
+        </div>
+
+        <input type="tel" name="telefono" placeholder="Teléfono" required>
+
+        <select name="sector" required>
+          <option value="" disabled selected>Sector</option>
+          <option value="Gobierno">Gobierno</option>
+          <option value="Educación">Educación</option>
+          <option value="Salud">Salud</option>
+          <option value="Empresarial">Empresarial</option>
+          <option value="Tecnología">Tecnología</option>
+          <option value="Otro">Otro</option>
+        </select>
+
+        <textarea name="mensaje" placeholder="¿Cómo podemos ayudarte?" required></textarea>
+
+        <button type="submit" class="btn-submit">
+          Enviar mensaje →
+        </button>
+
+      </form>
+    </div>
+
+    <!-- MAPA -->
+    <div class="contacto-mapa">
+      <iframe
+        src="https://www.google.com/maps?q=19%C2%B001'06.2%22N%2098%C2%B015'58.7%22W&z=17&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+
+  </div>
+</section>`;
+}
 // =====================================================
 // 12. SISTEMA DE VISTAS — CON ANIMACIONES GSAP
 // =====================================================
