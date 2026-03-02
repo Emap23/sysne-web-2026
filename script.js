@@ -971,16 +971,16 @@ const datosVistas = {
     'tactico_eq': {
         banner: "img/equi/PMI BG.webp",
         circulo: "img/equi/PMI C.webp",
-        titulo: "PMI (Punto de Monitoreo Inteligente)",
-        descripcion: "Infraestructura urbana inteligente que integra videovigilancia, comunicación y sistemas de alerta ciudadana.",
-        detalle1: "Cámaras PTZ de alta definición con zoom óptico y botón de pánico con conexión directa al C5/C4.",
+        titulo: "Equipamiento Táctico",
+        descripcion: "Solución avanzada diseñada para que las instituciones de seguridad localicen y rastreen dispositivos móviles con total precisión.",
+        detalle1: "El sistema permite identificar la ubicación exacta de objetivos en tiempo real, operando de forma móvil y discreta para responder ante emergencias, investigaciones criminales o tareas de rescate.",
         ventajas: [
-            { icono: "fa-video",        titulo: "Videovigilancia 360°",    texto: "Cobertura amplia con cámaras de alta resolución." },
-            { icono: "fa-bell",         titulo: "Botón de Pánico",         texto: "Comunicación inmediata con el centro de monitoreo." },
-            { icono: "fa-volume-high",  titulo: "Perifoneo Integrado",     texto: "Sistema de altavoces para alertas públicas." },
-            { icono: "fa-network-wired",titulo: "Conectividad Segura",     texto: "Enlaces por fibra óptica o microondas." }
+            { icono: "fa-shield-heart",        titulo: "Tecnología al Servicio de la Vida",    texto: "Mayor seguridad y protección ciudadana Permite actuar con rapidez en casos críticos como secuestros o desapariciones, localizando dispositivos en minutos para salvar vidas y devolver la tranquilidad a las familias." },
+            { icono: "fa-user-secret",         titulo: "Inteligencia Estratégica Contra el Crimen",         texto: "Combate efectivo a la delincuencia organizada Al interceptar y rastrear comunicaciones de grupos delictivos, el gobierno fortalece su capacidad de inteligencia, permitiendo desarticular bandas criminales con evidencia sólida." },
+            { icono: "fa-truck-medical",  titulo: "Herramienta Clave en Búsqueda y Rescate",     texto: "Respuesta inmediata en situaciones de emergencia En desastres naturales o accidentes en zonas de difícil acceso, el equipo se convierte en una herramienta vital de búsqueda y rescate para encontrar personas atrapadas o extraviadas." },
+            { icono: "fa-building-shield",titulo: "Tecnología que Genera Confianza",     texto: "Fortalecimiento de la confianza en las instituciones El uso de tecnología de última generación demuestra un gobierno moderno y equipado, comprometido con resultados reales y una gestión de seguridad eficiente y transparente." }
         ],
-        fraseFinal: "El PMI fortalece la seguridad urbana mediante monitoreo inteligente y respuesta inmediata."
+        fraseFinal: "Con este equipamiento, su administración no solo adquiere tecnología de punta, sino una herramienta decisiva para garantizar la paz pública y proteger lo más importante: la integridad de los ciudadanos."
     },
     'lpr_sistemas': {
         banner: "img/equi/Sistema LPR BG.webp",
@@ -1038,35 +1038,35 @@ const datosVistas = {
         ],
         fraseFinal: "Con dispositivos como el PM95, tu administración entrega a las corporaciones una herramienta de élite."
     },
-  'pmi': {
+ 'pmi': {
     banner: "img/equi/PMI.png",
     circulo: "img/equi/pmiC.png",
     titulo: "PMI (Punto de Monitoreo Inteligente)",
     descripcion: "Sistema integral de videovigilancia urbana instalado en municipios.",
-    detalle1: "Integra cámaras de vigilancia de alta definición, botón de pánico ciudadano y equipos de protección, enlazados directamente a los centros de control C5 o C4 para una respuesta inmediata.",
+    detalle1: "Los Postes de Monitoreo Inteligente (PMI) son nodos de seguridad urbana diseñados para vigilar y proteger las ciudades las 24 horas del día. Esta infraestructura integra cámaras de alta definición con visión de 360°, sistemas de reconocimiento facial y de placas, botones de pánico y altavoces, todo conectado en tiempo real a los centros de control. Su despliegue en puntos estratégicos permite una vigilancia constante y una respuesta inmediata ante cualquier incidente, convirtiéndose en el ojo digital que resguarda el orden público.",
     ventajas: [
         { 
-            icono: "fa-video",
-            titulo: "Cámaras de Vigilancia",
-            texto: "Cámaras fijas y PTZ con visión diurna y nocturna para supervisión continua en cualquier municipio."
+            icono: "fa-eye",
+            titulo: "Prevención del delito y entornos más seguros",
+            texto: "Su sola presencia en parques, avenidas y zonas de riesgo disuade actividades delictivas, permitiendo que las familias recuperen los espacios públicos y transiten con total tranquilidad."
         },
         { 
-            icono: "fa-bell",
-            titulo: "Botón de Pánico",
-            texto: "Permite a la ciudadanía solicitar apoyo inmediato ante emergencias, enlazado al centro de monitoreo."
+            icono: "fa-bell-concierge",
+            titulo: "Respuesta inmediata ante emergencias",
+            texto: "Gracias a los botones de pánico y la comunicación directa con el C5, los ciudadanos reciben auxilio policial o médico en segundos, reduciendo drásticamente los tiempos de atención en situaciones críticas."
         },
         { 
-            icono: "fa-shield-halved",
-            titulo: "Equipos de Protección",
-            texto: "Infraestructura robusta con gabinetes, postes y sistemas antivandálicos para operación segura."
+            icono: "fa-gavel",
+            titulo: "Evidencia contundente para la justicia",
+            texto: "La captura de rostros y placas con alta precisión facilita la identificación de infractores, asegurando que los delitos no queden impunes y fortaleciendo el estado de derecho."
         },
         { 
-            icono: "fa-network-wired",
-            titulo: "Monitoreo Inteligente",
-            texto: "Transmisión de datos segura mediante fibra óptica, radio o microondas hacia el C5/C4."
+            icono: "fa-chart-line",
+            titulo: "Gestión inteligente y transparencia gubernamental",
+            texto: "El uso de analítica de video permite a los gobernantes tomar decisiones basadas en datos reales sobre el flujo vial y la seguridad, proyectando una administración moderna y eficiente."
         }
     ],
-    fraseFinal: "El PMI brinda vigilancia permanente y protección inteligente para fortalecer la seguridad en municipios."
+    fraseFinal: "Con la implementación de los PMI, su gobierno garantiza una ciudad vigilada y conectada, transformando la tecnología en bienestar directo y protección real para cada ciudadano."
 }
 };
 
@@ -1602,7 +1602,41 @@ function inicializarEmailJS() {
         }
     });
 }
+// =====================================================
+// FUNCIÓN PARA ABRIR FORMULARIO DE CONTACTO
+// =====================================================
+function abrirFormularioContacto() {
+    const vistaInicio = document.getElementById('vista-inicio');
+    const vistaDetalle = document.getElementById('vista-detalle');
+    const contenedor = document.getElementById('contenido-dinamico');
 
+    // Si estamos en vista detalle, cambiar a inicio primero
+    if (vistaActual === 'detalle') {
+        volverInicio();
+        setTimeout(() => {
+            scrollAlFormulario();
+        }, 400);
+    } else {
+        // Si estamos en inicio, solo scroll
+        scrollAlFormulario();
+    }
+}
+
+function scrollAlFormulario() {
+    // Buscar la sección de contacto
+    const contactoSection = document.querySelector('.contacto-seccion');
+    
+    if (contactoSection) {
+        // Si existe, hacer scroll suave hacia ella
+        contactoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        // Si no existe (en vistas dinámicas), crear y mostrar el formulario
+        mostrarDetalle(obtenerHtmlForm('Contacto'));
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+    }
+}
 // =====================================================
 // 16. CARGA INICIAL
 // =====================================================
